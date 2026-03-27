@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Dungeon — Scratch Edition</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1e1e2e;font-family:'Segoe UI',sans-serif;overflow:hidden;user-select:none}
+#wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:6px}
+
+/* ── TOP BAR ── */
+.topbar{width:500px;background:#4c97ff;border-radius:10px 10px 0 0;padding:6px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:white;font-weight:700}
+.tlogo{font-size:18px}
+.ttitle{flex:1}
+.gflag{width:28px;height:28px;background:#59c059;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;border:2px solid #389438;transition:transform .12s}
+.gflag:hover{transform:scale(1.15)}
+.gstop{width:28px;height:28px;background:#ff6680;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;border:2px solid #cc0000;transition:transform .12s}
+.gstop:hover{transform:scale(1.15)}
+
+/* ── STAGE ── */
+#stage{width:500px;height:400px;position:relative;overflow:hidden;border:3px solid #555;cursor:default}
+
+/* ── BOTTOM BLOCKS BAR ── */
+.blocksbar{width:500px;background:#2d2d3f;border-radius:0 0 10px 10px;padding:7px 12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.sblock{display:inline-flex;align-items:center;gap:5px;padding:6px 14px 6px 20px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .12s;color:white;position:relative;clip-path:polygon(0 50%,9px 0,100% 0,100% 100%,9px 100%)}
+.sblock::before{content:'';position:absolute;left:7px;top:50%;transform:translateY(-50%);width:7px;height:7px;background:rgba(255,255,255,.3);border-radius:50%}
+.sblock:hover{filter:brightness(1.15);transform:scale(1.05)}
+.sb-e{background:#ffab19}.sb-m{background:#4c97ff}.sb-l{background:#9966ff}.sb-s{background:#cf63cf}.sb-o{background:#59c059}
+
+/* ── SCREENS ── */
+.screen{position:absolute;inset:0;display:none}
+.screen.active{display:block}
+
+/* ── TITLE ── */
+#s-title{background:radial-gradient(ellipse at 50% 40%,#2a1a5e,#080618)}
+.stars-layer{position:absolute;inset:0;overflow:hidden}
+.star{position:absolute;background:white;border-radius:50%;animation:twinkle linear infinite}
+@keyframes twinkle{0%,100%{opacity:1}50%{opacity:.15}}
+.title-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-54%);text-align:center}
+.title-center h1{font-size:48px;font-weight:900;color:#ffab19;text-shadow:3px 3px 0 #aa5500,0 0 40px rgba(255,171,25,.6);line-height:1;letter-spacing:2px}
+.title-center h1 span{color:#4c97ff;text-shadow:3px 3px 0 #1133aa}
+.title-center .sub{font-size:12px;color:#888;letter-spacing:4px;margin:6px 0 18px;font-style:italic}
+.tbtn{display:block;width:188px;margin:5px auto;padding:9px 0;border-radius:22px;border:3px solid;font-size:13px;font-weight:700;cursor:pointer;transition:all .14s;text-align:center}
+.tbtn:hover{transform:scale(1.06);filter:brightness(1.15)}
+.tbtn-play{background:#59c059;border-color:#389438;color:white}
+.tbtn-diff{background:#ffab19;border-color:#cc7700;color:white}
+.tbtn-sets{background:#9966ff;border-color:#6633cc;color:white}
+.tbtn-how {background:#4c97ff;border-color:#2244aa;color:white}
+
+/* ── PANELS (popups) ── */
+.panel{position:absolute;z-index:100;background:rgba(10,8,24,.97);border:3px solid #4c97ff;border-radius:14px;padding:14px 16px;color:white;animation:popIn .2s ease}
+@keyframes popIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.panel-title{font-size:14px;font-weight:700;color:#ffab19;margin-bottom:10px;text-align:center}
+
+/* Diff */
+#p-diff{top:8px;left:8px;right:8px;max-height:370px;overflow-y:auto}
+.do{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:3px solid transparent;border-radius:10px;margin:5px 0;cursor:pointer;background:rgba(255,255,255,.05);transition:all .14s}
+.do:hover,.do.sel{background:rgba(76,151,255,.18);border-color:#4c97ff}
+.doi{font-size:22px;width:32px;flex-shrink:0;padding-top:2px}
+.don{font-size:13px;font-weight:700;color:#ffab19;margin-bottom:1px}
+.dod{font-size:11px;color:#aaa}
+.dotags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.dtag{font-size:9px;padding:2px 7px;border-radius:9px;font-weight:700;color:white}
+.dtg{background:#59c059}.dty{background:#ffab19}.dtr{background:#ff6680}.dtp{background:#9966ff}
+.dmaths{font-size:10px;color:#7c8;margin-top:3px;font-style:italic}
+
+/* Settings */
+#p-sets{top:8px;left:8px;right:8px}
+.srow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07);font-size:12px}
+.srow:last-child{border:none}
+.slbl{font-weight:700;color:#ffab19;font-size:11px}
+.tog{width:40px;height:22px;background:#555;border-radius:11px;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
+.tog.on{background:#59c059}
+.tog::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.tog.on::after{left:21px}
+input[type=range]{width:95px;accent-color:#4c97ff}
+.rv{font-size:11px;color:#ffab19;font-weight:700;min-width:26px;text-align:right}
+
+/* Howto */
+#p-how{top:6px;left:6px;right:6px;max-height:374px;overflow-y:auto}
+.hrow{display:flex;gap:9px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.hrow:last-child{border:none}
+.hico{font-size:18px;width:26px;flex-shrink:0}
+.htxt strong{font-size:11px;color:#ffab19;display:block;margin-bottom:1px}
+.htxt span{font-size:10px;color:#aaa}
+
+/* ── GAME SCREEN LAYOUT ── */
+#s-game{background:#0a0618;flex-direction:column}
+
+/* Canvas backdrop */
+#dc{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+
+/* Sprite layer */
+#sprite-layer{position:absolute;inset:0;z-index:1;pointer-events:none}
+
+/* MONSTER SPRITE */
+.mon-spr{position:absolute;left:270px;top:55px;width:145px;height:145px;animation:mIdle 3s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(200,50,50,.4));transform-origin:center bottom}
+@keyframes mIdle{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-9px) scale(1.05)}}
+.mon-spr.hit{animation:mHit .35s ease!important;filter:drop-shadow(0 0 28px #ff6680) brightness(2.5)!important}
+@keyframes mHit{0%{transform:scale(1) rotate(0)}35%{transform:scale(.78) rotate(-9deg)}100%{transform:scale(1) rotate(0)}}
+.mon-spr.dead{animation:mDead .6s ease forwards!important}
+@keyframes mDead{to{transform:scale(0) rotate(220deg) translateY(30px);opacity:0}}
+.mon-spr.batkA{animation:bAtk .5s ease!important}
+@keyframes bAtk{0%{transform:translateX(0) scale(1)}30%{transform:translateX(45px) scale(1.3);filter:drop-shadow(0 0 20px red)}65%{transform:translateX(-12px) scale(1.1)}100%{transform:translateX(0) scale(1)}}
+
+/* HERO SPRITE */
+.hero-spr{position:absolute;left:44px;top:198px;width:75px;height:100px;animation:hIdle 1.8s ease-in-out infinite;transform-origin:center bottom}
+@keyframes hIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.hero-spr.atk{animation:hAtk .42s ease!important}
+@keyframes hAtk{0%{transform:translateX(0)}38%{transform:translateX(62px) rotate(5deg)}100%{transform:translateX(0)}}
+.hero-spr.hurt{animation:hHurt .35s ease!important}
+@keyframes hHurt{0%,100%{transform:translateX(0);filter:none}50%{transform:translateX(-12px);filter:brightness(3) sepia(1) saturate(8) hue-rotate(-15deg)}}
+
+/* ── HUD (top strip) ── */
+#hud{position:absolute;top:0;left:0;right:0;height:30px;background:rgba(0,0,0,.7);z-index:10;display:flex;align-items:center;padding:0 8px;gap:10px}
+.hdv{background:rgba(255,171,25,.88);border:2px solid #cc7700;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700;color:white;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.hdv span{font-size:9px;color:#ffe0a0}
+.hp-outer{width:90px;height:14px;background:#330000;border:2px solid #880000;border-radius:7px;overflow:hidden}
+.hp-inner{height:100%;background:linear-gradient(90deg,#ff0000,#ff6680);transition:width .4s;border-radius:7px}
+.hp-inner.mid{background:linear-gradient(90deg,#ff8800,#ffcc00)}
+.hp-inner.hi{background:linear-gradient(90deg,#00aa00,#59c059)}
+.floor-dots-row{display:flex;gap:4px;align-items:center;margin-left:auto}
+.fdot{width:9px;height:9px;background:#333;border:2px solid #555;border-radius:50%;transition:all .3s}
+.fdot.done{background:#ffab19;border-color:#cc7700}
+.fdot.cur{background:white;border-color:#4c97ff;box-shadow:0 0 7px #4c97ff;width:12px;height:12px;animation:dpls 1.2s ease infinite}
+.fdot.boss{border-color:#ff6680}
+.fdot.boss.cur{background:#ff6680;box-shadow:0 0 8px #ff6680}
+@keyframes dpls{0%,100%{box-shadow:0 0 6px #4c97ff}50%{box-shadow:0 0 16px #4c97ff}}
+
+/* ── BOOST ROW (below hud, above question) ── */
+#boost-row{position:absolute;top:34px;left:0;right:0;height:36px;background:rgba(0,0,0,.5);z-index:10;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 8px}
+.bst{width:44px;height:30px;background:rgba(255,171,25,.8);border:2px solid #cc7700;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:all .12s;position:relative;font-size:15px}
+.bst:hover:not(.dep){transform:scale(1.1);filter:brightness(1.2)}
+.bst.dep{opacity:.3;cursor:not-allowed;pointer-events:none}
+.bst-cnt{position:absolute;top:-4px;right:-4px;background:#ff6680;border:2px solid white;color:white;font-size:8px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.bst::after{content:attr(data-tip);position:absolute;bottom:36px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.92);border:1px solid #4c97ff;padding:3px 8px;font-size:9px;color:white;white-space:nowrap;border-radius:5px;display:none;font-family:inherit;pointer-events:none;z-index:50}
+.bst:hover::after{display:block}
+
+/* Phase badge */
+#phase-badge{position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:15;font-size:10px;font-weight:700;padding:3px 12px;border-radius:9px;display:none;white-space:nowrap}
+#phase-badge.enr{background:#ff6600;color:white;display:block}
+#phase-badge.bsk{background:#ff0066;color:white;display:block}
+#phase-badge.doom{background:#440044;color:#ff88ff;border:2px solid #ff00ff;display:block}
+
+/* Monster name + HP bar */
+#mon-info{position:absolute;right:8px;top:74px;z-index:10;text-align:right}
+.mon-nm{font-size:12px;font-weight:700;color:white;margin-bottom:2px}
+.mon-tp{font-size:10px;color:#aaa;font-style:italic;margin-bottom:4px}
+.mon-hp-outer{width:120px;height:10px;background:#330000;border:2px solid #880000;border-radius:5px;overflow:hidden;margin-left:auto}
+.mon-hp-inner{height:100%;background:linear-gradient(90deg,#800000,#cc2200,#ff4444);transition:width .5s}
+.mon-hp-txt{font-size:9px;color:#ff8888;font-weight:700;margin-top:2px}
+.rage-outer{width:120px;height:6px;background:#330011;border:2px solid #880044;border-radius:3px;overflow:hidden;margin-top:3px;display:none}
+.rage-inner{height:100%;background:linear-gradient(90deg,#ff0066,#ff9900);transition:width .4s}
+
+/* ── QUESTION AREA — ALWAYS VISIBLE AT BOTTOM ── */
+#q-area{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  background:rgba(5,3,18,.95);
+  border-top:3px solid #4c97ff;
+  z-index:20;
+  padding:10px 12px 12px;
+  min-height:155px;
+}
+.qmode{display:inline-block;font-size:9px;font-weight:700;padding:3px 9px;border-radius:8px;margin-bottom:6px;letter-spacing:1px}
+.qm-sp{background:#ff6680;color:white}.qm-ti{background:#ffab19;color:white}.qm-do{background:#4c97ff;color:white}.qm-bo{background:#9966ff;color:white}
+.qtext{font-size:20px;font-weight:700;color:white;text-align:center;margin:4px 0 8px}
+.qglow{color:#ffab19;text-shadow:0 0 14px rgba(255,171,25,.5)}
+.hint{font-size:10px;color:#59c059;font-style:italic;text-align:center;margin-bottom:4px}
+
+/* ANSWER BUTTONS */
+.ans-row{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.abtn{background:#4c97ff;border:3px solid #2244aa;border-radius:18px;padding:8px 18px;font-size:16px;font-weight:700;color:white;cursor:pointer;transition:all .12s;min-width:68px;text-align:center}
+.abtn:hover{background:#2244aa;transform:scale(1.07)}
+.abtn:active{transform:scale(.95)}
+.abtn.cor{background:#59c059!important;border-color:#389438!important;animation:corFlash .4s ease}
+.abtn.wrg{background:#ff6680!important;border-color:#cc0000!important;animation:wrgShk .35s ease}
+@keyframes corFlash{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@keyframes wrgShk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+/* TIMER */
+.tnum{font-size:34px;font-weight:900;color:#ffab19;text-align:center;line-height:1;text-shadow:0 0 14px rgba(255,171,25,.5)}
+.tnum.urg{color:#ff6680;animation:turg .45s ease infinite}
+@keyframes turg{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.tbar-outer{width:100%;height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin:4px 0 6px}
+.tbar-inner{height:100%;background:linear-gradient(90deg,#ff0000,#ffab19,#59c059);transition:width .1s linear}
+
+/* DODGE */
+.dodge-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.dnum{width:54px;height:50px;background:rgba(76,151,255,.18);border:3px solid #4c97ff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:white;cursor:pointer;transition:all .12s}
+.dnum:hover{background:rgba(76,151,255,.38);transform:scale(1.1)}
+.dnum.cor{background:rgba(89,192,89,.35)!important;border-color:#59c059!important}
+.dnum.wrg{background:rgba(255,102,128,.35)!important;border-color:#ff6680!important}
+
+/* TYPE INPUT */
+.sinp{background:white;border:3px solid #aaa;border-radius:8px;padding:7px 12px;font-size:20px;font-weight:700;color:#333;text-align:center;outline:none;width:120px;display:block;margin:4px auto}
+.sinp:focus{border-color:#4c97ff;box-shadow:0 0 0 3px rgba(76,151,255,.3)}
+
+/* ── SAY BUBBLE ── */
+.say{position:absolute;background:white;border:2px solid #aaa;border-radius:12px;padding:7px 11px;font-size:12px;font-weight:700;color:#333;max-width:180px;z-index:30;pointer-events:none;animation:popIn .18s ease}
+.say::after{content:'';position:absolute;bottom:-11px;left:18px;border:6px solid transparent;border-top-color:white}
+
+/* ── FLOATING DAMAGE ── */
+.floatdmg{position:absolute;font-size:21px;font-weight:900;pointer-events:none;z-index:70;animation:fdUp 1.1s ease forwards;text-shadow:2px 2px 4px rgba(0,0,0,.6)}
+@keyframes fdUp{0%{opacity:1;transform:translateY(0) scale(1)}60%{opacity:1;transform:translateY(-52px) scale(1.2)}100%{opacity:0;transform:translateY(-90px) scale(.8)}}
+
+/* ── BOSS ATTACK FLASH ── */
+.batk{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(200,0,0,.16);pointer-events:none;animation:batkF .85s ease forwards}
+@keyframes batkF{0%,65%{opacity:1}100%{opacity:0}}
+.batk-txt{background:rgba(160,0,0,.9);border:3px solid #ff0000;border-radius:14px;padding:10px 22px;font-size:20px;font-weight:900;color:white;text-shadow:0 0 18px red;animation:popIn .28s ease;text-align:center;max-width:280px}
+
+/* ── COMBO FLASH ── */
+.combo{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;pointer-events:none;animation:cboF .8s ease forwards}
+@keyframes cboF{0%{opacity:0;transform:scale(.35)}22%{opacity:1;transform:scale(1.2)}65%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
+.combo-txt{font-size:52px;font-weight:900;color:#ffab19;text-shadow:3px 3px 0 #aa5500,0 0 40px rgba(255,171,25,.9)}
+
+/* ── EVENT OVERLAY ── */
+#ev-ov{position:absolute;inset:0;background:rgba(0,0,0,.78);z-index:80;display:none;align-items:center;justify-content:center}
+#ev-ov.show{display:flex}
+.ev-box{background:rgba(8,6,22,.97);border:3px solid #4c97ff;border-radius:16px;padding:16px;max-width:310px;width:92%;text-align:center;max-height:370px;overflow-y:auto}
+.ev-ico{font-size:42px;display:block;margin-bottom:7px;animation:eico 1.1s ease infinite}
+@keyframes eico{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.ev-ttl{font-size:17px;font-weight:700;color:#ffab19;margin-bottom:4px}
+.ev-dsc{font-size:11px;color:#aaa;margin-bottom:11px;line-height:1.5}
+.ev-log{font-size:11px;font-style:italic;min-height:16px;margin-top:7px}
+.eabtn{background:#4c97ff;border:2px solid #2244aa;color:white;font-size:15px;font-weight:700;padding:7px 14px;border-radius:12px;cursor:pointer;margin:3px;transition:all .12s}
+.eabtn:hover{background:#2244aa;transform:scale(1.06)}
+.eabtn.cor{background:#59c059;border-color:#389438}
+.eabtn.wrg{background:#ff6680;border-color:#cc0000;animation:wrgShk .3s ease}
+.mem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-width:232px;margin:0 auto}
+.mc{height:50px;background:rgba(76,151,255,.18);border:2px solid #4c97ff;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:19px;transition:all .14s}
+.mc.flip{background:rgba(255,171,25,.25);border-color:#ffab19}
+.mc.matched{background:rgba(89,192,89,.25);border-color:#59c059;pointer-events:none}
+.mc.bad{border-color:#ff6680;animation:wrgShk .3s ease}
+.wh-wrap{position:relative;width:148px;height:148px;margin:0 auto 9px}
+.wh-ptr{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:14px;z-index:2}
+.wh-ring{width:148px;height:148px;border-radius:50%;overflow:hidden;transition:transform 2.5s cubic-bezier(.17,.67,.12,.99);border:3px solid #4c97ff}
+.chain-row{display:flex;align-items:center;gap:4px;justify-content:center;flex-wrap:wrap;margin:7px 0}
+.cb{width:38px;height:38px;background:rgba(255,255,255,.07);border:2px solid #555;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white}
+.ci{width:38px;height:38px;background:rgba(76,151,255,.18);border:2px solid #4c97ff;border-radius:7px;font-size:15px;font-weight:700;color:#ffab19;text-align:center;outline:none}
+.slide-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:184px;margin:0 auto}
+.st{height:56px;background:rgba(76,151,255,.18);border:2px solid #4c97ff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#ffab19;cursor:pointer;transition:all .12s}
+.st:hover:not(.empty){background:rgba(76,151,255,.35)}
+.st.empty{background:transparent;border-color:transparent;cursor:default}
+.sh-item{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:rgba(255,255,255,.05);border-radius:8px;margin:4px 0}
+.sh-n{font-size:10px;font-weight:700;color:#ffab19}.sh-d{font-size:9px;color:#aaa}
+
+/* ── REWARD ── */
+#s-reward{background:radial-gradient(ellipse at 50% 50%,#1a1040,#080618)}
+.rw-box{position:absolute;inset:14px;background:rgba(8,6,22,.96);border:3px solid #ffab19;border-radius:14px;padding:16px;text-align:center;overflow-y:auto}
+.rw-ico{font-size:48px;display:block;margin-bottom:9px;animation:eico 1.5s ease infinite}
+.rw-ttl{font-size:20px;font-weight:700;color:#ffab19;margin-bottom:4px}
+.rw-dsc{font-size:11px;color:#aaa;font-style:italic;margin-bottom:9px}
+.rw-gld{font-size:26px;font-weight:700;color:#ffab19;margin:6px 0}
+.rw-bgs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:9px}
+.rwbg{font-size:10px;padding:3px 9px;border-radius:9px;font-weight:700;color:white}
+
+/* ── END ── */
+#s-end{background:radial-gradient(ellipse at 50% 50%,#1a1040,#080618)}
+.end-box{position:absolute;inset:14px;background:rgba(8,6,22,.96);border:3px solid #4c97ff;border-radius:14px;padding:14px;text-align:center;overflow-y:auto}
+.end-ico{font-size:54px;display:block;margin-bottom:10px}
+.end-ttl{font-size:30px;font-weight:900;margin-bottom:6px}
+.et-w{color:#ffab19;text-shadow:3px 3px 0 #aa5500}.et-d{color:#ff6680;text-shadow:3px 3px 0 #aa0000}
+.end-sts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.est{background:rgba(76,151,255,.16);border:2px solid #4c97ff;border-radius:9px;padding:8px 13px;min-width:72px}
+.esl{font-size:8px;color:#aaa;letter-spacing:2px;text-transform:uppercase}.esv{font-size:20px;font-weight:700;color:#ffab19}
+
+/* Music viz */
+#mviz{position:absolute;bottom:160px;left:6px;z-index:25;display:flex;gap:2px;align-items:flex-end;height:15px;cursor:pointer}
+.vb{width:3px;background:#4c97ff;border-radius:1px;animation:vba .8s ease infinite}
+.vb:nth-child(1){height:7px;animation-delay:0s}.vb:nth-child(2){height:15px;animation-delay:.12s}.vb:nth-child(3){height:5px;animation-delay:.24s}.vb:nth-child(4){height:12px;animation-delay:.08s}.vb:nth-child(5){height:9px;animation-delay:.18s}
+@keyframes vba{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.3)}}
+.vb.pau{animation:none;transform:scaleY(.3)}
+
+@keyframes pgshk{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.shk{animation:pgshk .24s ease}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="topbar">
+    <span class="tlogo">🐱</span>
+    <span class="ttitle">Math Dungeon — Scratch Edition</span>
+    <div class="gflag" onclick="startGame()" title="Green Flag — Start">▶</div>
+    <div class="gstop" onclick="stopGame()" title="Stop">■</div>
+  </div>
+
+  <div id="stage">
+
+    <!-- TITLE SCREEN -->
+    <div class="screen active" id="s-title">
+      <div class="stars-layer" id="stars"></div>
+      <div class="title-center">
+        <h1>MATH<br><span>DUNGEON</span></h1>
+        <div class="sub">✦ Scratch Edition ✦</div>
+        <button class="tbtn tbtn-play" onclick="startGame()">▶ Play Now</button>
+        <button class="tbtn tbtn-diff" onclick="openPanel('p-diff')">⚡ Difficulty</button>
+        <button class="tbtn tbtn-sets" onclick="openPanel('p-sets')">⚙ Settings</button>
+        <button class="tbtn tbtn-how"  onclick="openPanel('p-how')">? How to Play</button>
+      </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div class="screen" id="s-game">
+      <canvas id="dc" width="500" height="400"></canvas>
+      <div id="sprite-layer">
+        <div class="mon-spr" id="mspr"></div>
+        <div class="hero-spr" id="hspr"></div>
+      </div>
+      <!-- HUD strip -->
+      <div id="hud">
+        <div class="hdv"><span>❤️ HP</span><div class="hp-outer"><div class="hp-inner hi" id="hpfill" style="width:100%"></div></div><span id="hptxt">6/6</span></div>
+        <div class="hdv"><span>💰</span><span id="vgold">0</span></div>
+        <div class="hdv"><span>🔥</span><span id="vstreak">0</span></div>
+        <div class="floor-dots-row" id="fdots"></div>
+      </div>
+      <!-- Boost row -->
+      <div id="boost-row"></div>
+      <!-- Phase badge -->
+      <div id="phase-badge"></div>
+      <!-- Monster info -->
+      <div id="mon-info">
+        <div class="mon-nm" id="mname">Monster</div>
+        <div class="mon-tp" id="mtype">Type</div>
+        <div class="mon-hp-outer"><div class="mon-hp-inner" id="mhpfill" style="width:100%"></div></div>
+        <div class="mon-hp-txt" id="mhptxt">HP</div>
+        <div class="rage-outer" id="rage-outer"><div class="rage-inner" id="ragefill" style="width:0%"></div></div>
+      </div>
+      <!-- Music viz -->
+      <div id="mviz" onclick="toggleMusic()"><div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div><div class="vb"></div></div>
+      <!-- QUESTION AREA — always at bottom -->
+      <div id="q-area">
+        <div style="text-align:center" id="q-inner">
+          <div style="color:#aaa;font-style:italic;font-size:13px">Loading dungeon…</div>
+        </div>
+      </div>
+      <!-- Event overlay -->
+      <div id="ev-ov">
+        <div class="ev-box" id="ev-box"></div>
+      </div>
+    </div>
+
+    <!-- REWARD -->
+    <div class="screen" id="s-reward">
+      <div class="rw-box" id="rw-box"></div>
+    </div>
+
+    <!-- END -->
+    <div class="screen" id="s-end">
+      <div class="end-box" id="end-box"></div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="panel" id="p-diff" style="display:none">
+      <div class="panel-title">⚡ Choose Difficulty</div>
+      <div class="do sel" id="do-sq" onclick="setDiff('sq')"><span class="doi">🌿</span><div><div class="don">Squire</div><div class="dod">Easy — big HP, long timer, hints shown.</div><div class="dotags"><span class="dtag dtg">8 HP</span><span class="dtag dtg">+6s</span><span class="dtag dtg">Hints ON</span></div><div class="dmaths">Math: Addition &amp; Subtraction only</div></div></div>
+      <div class="do" id="do-kn" onclick="setDiff('kn')"><span class="doi">⚔️</span><div><div class="don">Knight</div><div class="dod">Balanced — multiplication joins mid-game.</div><div class="dotags"><span class="dtag dty">6 HP</span><span class="dtag dty">8s timer</span></div><div class="dmaths">Math: + − × ÷ (scales with floors)</div></div></div>
+      <div class="do" id="do-ch" onclick="setDiff('ch')"><span class="doi">🔥</span><div><div class="don">Champion</div><div class="dod">Hard — short timers, bosses hit twice.</div><div class="dotags"><span class="dtag dtr">4 HP</span><span class="dtag dtr">5s</span><span class="dtag dtr">Boss ×2</span></div><div class="dmaths">Math: + − × ÷ mod powers</div></div></div>
+      <div class="do" id="do-lg" onclick="setDiff('lg')"><span class="doi">💜</span><div><div class="don">Legend</div><div class="dod">One mistake = death. Algebra &amp; fractions!</div><div class="dotags"><span class="dtag dtp">3 HP</span><span class="dtag dtp">4s</span><span class="dtag dtp">Instant death</span></div><div class="dmaths">Math: Algebra, fractions, exponents</div></div></div>
+      <div style="text-align:center;margin-top:10px"><button class="abtn" onclick="closePanel('p-diff')">✓ Confirm</button></div>
+    </div>
+
+    <div class="panel" id="p-sets" style="display:none">
+      <div class="panel-title">⚙ Settings</div>
+      <div class="srow"><span class="slbl">Music</span><button class="tog on" id="tog-mus" onclick="togS('mus')"></button></div>
+      <div class="srow"><span class="slbl">Music Vol</span><div style="display:flex;gap:5px;align-items:center"><input type="range" min="0" max="100" value="55" id="s-mv" oninput="setMV(this.value)"><span class="rv" id="s-mv-v">55</span></div></div>
+      <div class="srow"><span class="slbl">SFX Vol</span><div style="display:flex;gap:5px;align-items:center"><input type="range" min="0" max="100" value="70" id="s-sv" oninput="setSV(this.value)"><span class="rv" id="s-sv-v">70</span></div></div>
+      <div class="srow"><span class="slbl">Screen Shake</span><button class="tog on" id="tog-shk" onclick="togS('shk')"></button></div>
+      <div class="srow"><span class="slbl">Combo Anim</span><button class="tog on" id="tog-cbo" onclick="togS('cbo')"></button></div>
+      <div class="srow"><span class="slbl">Timer Duration</span><div style="display:flex;gap:5px;align-items:center"><input type="range" min="4" max="16" value="8" id="s-td" oninput="setTD(this.value)"><span class="rv" id="s-td-v">8s</span></div></div>
+      <div style="text-align:center;margin-top:10px"><button class="abtn" onclick="closePanel('p-sets')">✓ Done</button></div>
+    </div>
+
+    <div class="panel" id="p-how" style="display:none;top:6px;left:6px;right:6px;max-height:380px;overflow-y:auto">
+      <div class="panel-title">? How to Play</div>
+      <div class="hrow"><span class="hico">⚔️</span><div class="htxt"><strong>ATTACK SPELL</strong><span>Pick the correct answer from 4 options to strike the monster.</span></div></div>
+      <div class="hrow"><span class="hico">⏱️</span><div class="htxt"><strong>TIME ATTACK</strong><span>Answer before the timer runs out — faster = bonus gold!</span></div></div>
+      <div class="hrow"><span class="hico">🎯</span><div class="htxt"><strong>DODGE MODE</strong><span>Find the number that breaks the sequence pattern.</span></div></div>
+      <div class="hrow"><span class="hico">🔮</span><div class="htxt"><strong>BOSS STRIKE</strong><span>Type the exact answer. Bosses counter-attack on wrong answers!</span></div></div>
+      <div class="hrow"><span class="hico">💀</span><div class="htxt"><strong>BOSS MECHANICS</strong><span>At 50% HP bosses ENRAGE and attack every mistake. At 25% BERSERK deals 2 damage per hit!</span></div></div>
+      <div class="hrow"><span class="hico">⚗️</span><div class="htxt"><strong>BOOSTS</strong><span>❄️Freeze ⚡Double 🛡Shield 🎯50/50 💉Heal — tap them mid-battle!</span></div></div>
+      <div class="hrow"><span class="hico">🎉</span><div class="htxt"><strong>FUN EVENTS</strong><span>Memory Match, Spin Wheel, Tile Puzzle, Math Chain & more appear between floors!</span></div></div>
+      <div class="hrow"><span class="hico">📐</span><div class="htxt"><strong>DIFFICULTY MATH</strong><span>Squire: + − only. Knight: + − × ÷. Champion: powers & mod. Legend: algebra & fractions!</span></div></div>
+      <div style="text-align:center;margin-top:10px"><button class="abtn" onclick="closePanel('p-how')">✓ Got it!</button></div>
+    </div>
+
+  </div><!-- /stage -->
+
+  <div class="blocksbar">
+    <span style="font-size:9px;color:#888;font-weight:700;letter-spacing:1px">BLOCKS:</span>
+    <button class="sblock sb-e" onclick="startGame()">🚩 Start</button>
+    <button class="sblock sb-m" onclick="openPanel('p-diff')">⚡ Difficulty</button>
+    <button class="sblock sb-l" onclick="openPanel('p-sets')">⚙ Settings</button>
+    <button class="sblock sb-s" onclick="toggleMusic()">🎵 Music</button>
+    <button class="sblock sb-o" onclick="openPanel('p-how')">📋 How to Play</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════════════════
+const CFG={diff:'kn',musVol:.55,sfxVol:.7,musOn:true,shk:true,cbo:true,td:8};
+const DIFFS={
+  sq:{hp:8,tb:6,hints:true,oneshot:false,bAtkM:1,bRate:.4},
+  kn:{hp:6,tb:0,hints:false,oneshot:false,bAtkM:1,bRate:.6},
+  ch:{hp:4,tb:-3,hints:false,oneshot:false,bAtkM:2,bRate:.8},
+  lg:{hp:3,tb:-4,hints:false,oneshot:true,bAtkM:2,bRate:1},
+};
+const BD={freeze:{n:'Freeze',i:'❄️',tip:'❄ +5s to timer'},double:{n:'×2 Dmg',i:'⚡',tip:'⚡ Double next hit'},shield:{n:'Shield',i:'🛡️',tip:'🛡 Block 1 hit'},fifty:{n:'50/50',i:'🎯',tip:'🎯 Remove 2 wrong'},heal:{n:'Heal',i:'💉',tip:'💉 Restore 2 HP'}};
+
+// ══════════════════════════════════════════════════════════
+//  MATH GENERATOR — difficulty aware
+// ══════════════════════════════════════════════════════════
+function ri(n){return Math.floor(Math.random()*n)+1;}
+function genQ(diff){
+  const d=CFG.diff;
+  let ops,text,ans;
+  if(d==='sq'){ops=['+','-'];}
+  else if(d==='kn'){ops=diff<=1?['+','-']:diff===2?['+','-','×']:['+','-','×','÷'];}
+  else if(d==='ch'){ops=diff<=2?['+','-','×','÷']:diff===3?['×','÷','%','pow']:['×','÷','%','pow'];}
+  else{ops=diff<=2?['×','÷']:diff===3?['×','÷','pow','alg']:['pow','alg'];}
+  const op=ops[Math.floor(Math.random()*ops.length)];
+  if(op==='+'){let a=ri(18)+5,b=ri(18)+5;ans=a+b;text=`${a} + ${b}`;}
+  else if(op==='-'){let a=ri(30)+15,b=ri(a-4)+2;ans=a-b;text=`${a} − ${b}`;}
+  else if(op==='×'){let a=ri(9)+2,b=ri(9)+2;ans=a*b;text=`${a} × ${b}`;}
+  else if(op==='÷'){let b=ri(9)+2,c=ri(11)+2;ans=c;text=`${b*c} ÷ ${b}`;}
+  else if(op==='%'){let a=ri(40)+12,b=ri(9)+2;ans=a%b;text=`${a} mod ${b}`;}
+  else if(op==='pow'){const bs=[2,3,4,5],ex=[2,3];let a=bs[Math.floor(Math.random()*bs.length)],b=ex[Math.floor(Math.random()*ex.length)];ans=Math.pow(a,b);text=`${a}^${b}`;}
+  else{// algebra
+    const s=ri(3);
+    if(s===1){let b=ri(18)+4,x=ri(18)+4;ans=x;text=`x + ${b} = ${x+b}, x=?`;}
+    else if(s===2){let b=ri(8)+2,x=ri(10)+2;ans=x;text=`${b}x = ${b*x}, x=?`;}
+    else{let b=ri(7)+2,c=ri(10)+2,x=ri(8)+2;ans=x;text=`${b}x + ${c} = ${b*x+c}, x=?`;}
+  }
+  return{text,ans:Math.round(ans||1)};
+}
+function mkW(ans,n){
+  const s=new Set([ans]);
+  while(s.size<n+1){const w=ans+(ri(Math.max(4,Math.abs(ans/2)|0)))*(Math.random()<.5?1:-1);if(w>=0&&w!==ans)s.add(w);}
+  s.delete(ans);return[...s].slice(0,n);
+}
+function getDiff(){
+  const b=Math.min(4,Math.floor((G.floor||0)/2)+1);
+  if(CFG.diff==='sq')return 1;
+  if(CFG.diff==='kn')return Math.min(3,b);
+  return Math.min(4,b+1);
+}
+
+// ══════════════════════════════════════════════════════════
+//  SVG MONSTER COSTUMES
+// ══════════════════════════════════════════════════════════
+const SVG={
+skeleton:`<svg viewBox="0 0 90 110" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="sk-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ff3300"/><stop offset="100%" stop-color="#550000"/></radialGradient><filter id="sk-g"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <ellipse cx="45" cy="107" rx="20" ry="4" fill="rgba(0,0,0,.3)"/>
+  <rect x="43" y="37" width="4" height="44" rx="1" fill="#b0a898"/>
+  <path d="M43 43 Q31 47 30 54 Q32 59 43 57" stroke="#c8c0b0" stroke-width="2.2" fill="none"/>
+  <path d="M47 43 Q59 47 60 54 Q58 59 47 57" stroke="#c8c0b0" stroke-width="2.2" fill="none"/>
+  <path d="M43 50 Q32 53 31 59" stroke="#b0a898" stroke-width="1.5" fill="none"/>
+  <path d="M47 50 Q58 53 59 59" stroke="#b0a898" stroke-width="1.5" fill="none"/>
+  <path d="M43 56 Q33 59 33 65" stroke="#b0a898" stroke-width="1.3" fill="none"/>
+  <path d="M47 56 Q57 59 57 65" stroke="#b0a898" stroke-width="1.3" fill="none"/>
+  <ellipse cx="45" cy="67" rx="12" ry="7" fill="none" stroke="#b0a898" stroke-width="1.5"/>
+  <path d="M33 67 Q38 75 45 77 Q52 75 57 67" fill="none" stroke="#b0a898" stroke-width="1.5"/>
+  <ellipse cx="45" cy="19" rx="18" ry="18" fill="#d4cfc0" stroke="#aaa8a0" stroke-width="1.3"/>
+  <ellipse cx="37" cy="15" rx="5.5" ry="6.5" fill="#1a1020"/>
+  <ellipse cx="53" cy="15" rx="5.5" ry="6.5" fill="#1a1020"/>
+  <ellipse cx="37" cy="15" rx="3.5" ry="4" fill="url(#sk-e)" filter="url(#sk-g)"/>
+  <ellipse cx="53" cy="15" rx="3.5" ry="4" fill="url(#sk-e)" filter="url(#sk-g)"/>
+  <path d="M38 6 L36 0 L42 5 L44 -1 L48 5 L52 0 L54 6" stroke="#888" stroke-width="1.5" fill="none"/>
+  <path d="M37 26 L39 29 L41 26 L43 28 L45 26 L47 29 L49 26 L51 28 L53 26" stroke="#e8e0d0" stroke-width="1.2" fill="none"/>
+  <path d="M34 14 L30 9 Q26 8 28 14" fill="#8a7a6a"/>
+  <path d="M56 14 L60 9 Q64 8 62 14" fill="#8a7a6a"/>
+  <rect x="21" y="36" width="5" height="18" rx="2" fill="#c8c0b0"/><rect x="16" y="52" width="5" height="15" rx="2" fill="#c0b8a8"/>
+  <rect x="18" y="64" width="3" height="7" rx="1" fill="#c0b8a8"/><rect x="20" y="64" width="3" height="8" rx="1" fill="#c0b8a8"/><rect x="23" y="64" width="2" height="6" rx="1" fill="#c0b8a8"/>
+  <rect x="64" y="36" width="5" height="18" rx="2" fill="#c8c0b0"/>
+  <rect x="72" y="20" width="4" height="40" rx="1" fill="#909090" stroke="#666" stroke-width="1"/>
+  <rect x="66" y="35" width="14" height="4" rx="1" fill="#887050"/>
+  <polygon points="74,14 72,20 76,20" fill="#c0c0c0"/>
+  <rect x="31" y="77" width="9" height="20" rx="2" fill="#c0b8a8"/><rect x="50" y="77" width="9" height="20" rx="2" fill="#c0b8a8"/>
+  <rect x="29" y="94" width="11" height="10" rx="2" fill="#b0a898"/><rect x="49" y="94" width="11" height="10" rx="2" fill="#b0a898"/>
+</svg>`,
+
+goblin:`<svg viewBox="0 0 92 118" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="gb-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ffe000"/><stop offset="100%" stop-color="#c08000"/></radialGradient><radialGradient id="gb-c" cx="50%" cy="30%"><stop offset="0%" stop-color="#88ffcc"/><stop offset="100%" stop-color="#006644"/></radialGradient><filter id="gb-g"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <ellipse cx="46" cy="114" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>
+  <path d="M26 57 Q22 75 24 107 L68 107 Q70 75 66 57 Q57 48 46 48 Q35 48 26 57 Z" fill="#2a4020" stroke="#1a3010" stroke-width="1.5"/>
+  <text x="46" y="80" text-anchor="middle" font-size="14" fill="#4a8040" opacity=".65">✦</text>
+  <path d="M36 57 L34 105" stroke="#3a5030" stroke-width="1.2"/><path d="M56 57 L58 105" stroke="#3a5030" stroke-width="1.2"/>
+  <ellipse cx="46" cy="40" rx="24" ry="24" fill="#4a7a3a" stroke="#3a6020" stroke-width="1.5"/>
+  <polygon points="24,30 15,12 27,27" fill="#3a6a28"/><polygon points="68,30 77,12 65,27" fill="#3a6a28"/>
+  <ellipse cx="36" cy="34" rx="6.5" ry="5.5" fill="#1a1020"/><ellipse cx="56" cy="34" rx="6.5" ry="5.5" fill="#1a1020"/>
+  <ellipse cx="36" cy="34" rx="4.5" ry="4" fill="url(#gb-e)" filter="url(#gb-g)"/><ellipse cx="56" cy="34" rx="4.5" ry="4" fill="url(#gb-e)" filter="url(#gb-g)"/>
+  <ellipse cx="36" cy="34" rx="2" ry="2" fill="#1a0800"/><ellipse cx="56" cy="34" rx="2" ry="2" fill="#1a0800"/>
+  <path d="M40 44 Q43 49 46 47 Q49 49 52 44" fill="#3a6020" stroke="#2a5010" stroke-width="1"/>
+  <circle cx="42" cy="34" r="1.5" fill="#3a6020"/><circle cx="58" cy="31" r="1.5" fill="#3a6020"/><circle cx="66" cy="42" r="1.2" fill="#3a6020"/>
+  <path d="M38 46 Q46 53 54 46" stroke="#2a5020" stroke-width="1.5" fill="none"/>
+  <polygon points="39,47 37,54 41,52" fill="#e8e0b0"/><polygon points="53,47 55,54 51,52" fill="#e8e0b0"/>
+  <path d="M22 22 Q25 7 46 1 Q67 7 70 22 Q59 15 46 16 Q33 15 22 22 Z" fill="#1a2a10"/>
+  <ellipse cx="46" cy="22" rx="24" ry="7" fill="#1a2a10"/>
+  <text x="46" y="18" text-anchor="middle" font-size="9" fill="#d4a017">★</text>
+  <rect x="66" y="45" width="6" height="20" rx="2.5" fill="#4a7a3a"/>
+  <rect x="69" y="6" width="5" height="62" rx="2" fill="#5a4020"/>
+  <circle cx="71" cy="6" r="11" fill="url(#gb-c)" filter="url(#gb-g)"/>
+  <ellipse cx="68" cy="3" rx="4" ry="3" fill="rgba(200,255,220,.4)"/>
+  <circle cx="60" cy="5" r="1.8" fill="#88ffcc" opacity=".7" filter="url(#gb-g)"/>
+  <circle cx="82" cy="10" r="1.4" fill="#88ffcc" opacity=".6" filter="url(#gb-g)"/>
+  <circle cx="76" cy="-1" r="1.6" fill="#88ffcc" opacity=".8" filter="url(#gb-g)"/>
+</svg>`,
+
+troll:`<svg viewBox="0 0 112 128" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="tr-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ff9900"/><stop offset="100%" stop-color="#7a3000"/></radialGradient></defs>
+  <ellipse cx="56" cy="124" rx="32" ry="5" fill="rgba(0,0,0,.3)"/>
+  <path d="M16 92 Q10 72 15 55 Q22 38 37 33 Q56 27 75 33 Q90 38 97 55 Q102 72 96 92 Q88 108 56 115 Q24 108 16 92 Z" fill="#6a6858" stroke="#5a5848" stroke-width="1.8"/>
+  <path d="M26 80 Q21 66 29 57 Q35 53 31 77 Z" fill="#5a5848"/>
+  <path d="M86 80 Q91 66 83 57 Q77 53 81 77 Z" fill="#5a5848"/>
+  <ellipse cx="28" cy="78" rx="8" ry="4.5" fill="#3a6a28" opacity=".7"/>
+  <ellipse cx="84" cy="70" rx="7" ry="3.5" fill="#3a6a28" opacity=".6"/>
+  <ellipse cx="55" cy="108" rx="11" ry="4" fill="#2a5a18" opacity=".65"/>
+  <ellipse cx="56" cy="39" rx="30" ry="26" fill="#7a7060"/>
+  <path d="M32 30 L28 20 L37 28 L35 16 L43 27" stroke="#6a6050" stroke-width="1.8" fill="none"/>
+  <path d="M80 30 L84 20 L75 28 L77 16 L69 27" stroke="#6a6050" stroke-width="1.8" fill="none"/>
+  <path d="M26 30 Q40 24 56 26 Q72 24 86 30" stroke="#5a5040" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="42" cy="38" rx="9" ry="10" fill="#3a3028"/><ellipse cx="70" cy="38" rx="9" ry="10" fill="#3a3028"/>
+  <ellipse cx="42" cy="38" rx="6.5" ry="7" fill="url(#tr-e)"/><ellipse cx="70" cy="38" rx="6.5" ry="7" fill="url(#tr-e)"/>
+  <ellipse cx="42" cy="38" rx="3" ry="3.5" fill="#1a0800"/><ellipse cx="70" cy="38" rx="3" ry="3.5" fill="#1a0800"/>
+  <ellipse cx="56" cy="51" rx="9" ry="5.5" fill="#6a6050"/>
+  <circle cx="51" cy="51" r="2.5" fill="#5a5040"/><circle cx="61" cy="51" r="2.5" fill="#5a5040"/>
+  <path d="M40 60 Q49 67 56 65 Q63 67 72 60" stroke="#5a5040" stroke-width="2.8" fill="none"/>
+  <polygon points="44,62 40,72 48,69" fill="#d0c8b8"/><polygon points="68,62 72,72 64,69" fill="#d0c8b8"/>
+  <path d="M7 58 Q0 65 0 78 Q2 92 16 92" fill="#6a6858" stroke="#5a5848" stroke-width="1.5"/>
+  <rect x="-6" y="36" width="12" height="52" rx="5" fill="#5a4020" stroke="#3a2010" stroke-width="1.3"/>
+  <ellipse cx="0" cy="36" rx="14" ry="12" fill="#4a3010" stroke="#3a2010" stroke-width="1.3"/>
+  <polygon points="0,23 -4,31 4,31" fill="#7a5020"/><polygon points="-11,30 -9,36 -9,42" fill="#7a5020"/><polygon points="11,30 9,36 9,42" fill="#7a5020"/>
+  <path d="M96 58 Q104 65 104 78 Q102 92 96 92" fill="#6a6858" stroke="#5a5848" stroke-width="1.5"/>
+  <rect x="30" y="105" width="18" height="20" rx="5" fill="#6a6858" stroke="#5a5848" stroke-width="1.3"/>
+  <rect x="64" y="105" width="18" height="20" rx="5" fill="#6a6858" stroke="#5a5848" stroke-width="1.3"/>
+</svg>`,
+
+ghost:`<svg viewBox="0 0 102 135" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="gh-b" cx="50%" cy="35%"><stop offset="0%" stop-color="rgba(130,80,200,.6)"/><stop offset="100%" stop-color="rgba(25,8,55,.28)"/></radialGradient><radialGradient id="gh-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ff00ff"/><stop offset="100%" stop-color="#3a0055"/></radialGradient><filter id="gh-g"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <ellipse cx="51" cy="66" rx="44" ry="55" fill="rgba(80,0,130,.14)" filter="url(#gh-g)"/>
+  <path d="M22 94 Q10 110 13 125" stroke="rgba(120,60,210,.55)" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M34 106 Q26 124 29 134" stroke="rgba(100,40,180,.42)" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M51 110 Q51 125 49 134" stroke="rgba(120,60,210,.42)" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <path d="M68 106 Q76 124 73 134" stroke="rgba(100,40,180,.42)" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M80 94 Q92 110 89 125" stroke="rgba(120,60,210,.55)" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M14 64 Q14 28 51 13 Q88 28 88 64 Q88 105 80 108 Q66 112 51 113 Q36 112 22 108 Z" fill="url(#gh-b)" stroke="rgba(170,100,255,.6)" stroke-width="1.5" filter="url(#gh-g)"/>
+  <text x="38" y="75" font-size="11" fill="rgba(210,100,255,.5)" filter="url(#gh-g)">✦</text>
+  <text x="57" y="87" font-size="9" fill="rgba(210,100,255,.4)" filter="url(#gh-g)">⊕</text>
+  <ellipse cx="51" cy="28" rx="24" ry="22" fill="rgba(110,55,175,.48)" stroke="rgba(190,110,255,.62)" stroke-width="1.5" filter="url(#gh-g)"/>
+  <ellipse cx="38" cy="24" rx="9" ry="10.5" fill="rgba(18,0,38,.85)"/><ellipse cx="64" cy="24" rx="9" ry="10.5" fill="rgba(18,0,38,.85)"/>
+  <ellipse cx="38" cy="24" rx="6" ry="7.5" fill="url(#gh-e)" filter="url(#gh-g)"/><ellipse cx="64" cy="24" rx="6" ry="7.5" fill="url(#gh-e)" filter="url(#gh-g)"/>
+  <rect x="37" y="20" width="2.2" height="8" rx="1.1" fill="#18001a"/><rect x="63" y="20" width="2.2" height="8" rx="1.1" fill="#18001a"/>
+  <path d="M40 37 Q51 46 62 37" stroke="rgba(210,100,255,.75)" stroke-width="2" fill="rgba(8,0,18,.65)"/>
+  <path d="M40 7 Q35 -1 30 4" stroke="rgba(150,75,240,.65)" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#gh-g)"/>
+  <path d="M51 4 Q51 -4 54 2" stroke="rgba(150,75,240,.72)" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#gh-g)"/>
+  <path d="M62 7 Q67 -1 72 4" stroke="rgba(150,75,240,.65)" stroke-width="4" fill="none" stroke-linecap="round" filter="url(#gh-g)"/>
+</svg>`,
+
+lava:`<svg viewBox="0 0 118 134" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="lv-c" cx="50%" cy="40%"><stop offset="0%" stop-color="#ffcc00"/><stop offset="50%" stop-color="#ff6600"/><stop offset="100%" stop-color="#cc2200"/></radialGradient><radialGradient id="lv-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="40%" stop-color="#ffcc00"/><stop offset="100%" stop-color="#ff4400"/></radialGradient><filter id="lv-g"><feGaussianBlur stdDeviation="2.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <ellipse cx="59" cy="129" rx="36" ry="6" fill="#cc2200" opacity=".5" filter="url(#lv-g)"/>
+  <ellipse cx="59" cy="129" rx="26" ry="4" fill="#ff6600" opacity=".4" filter="url(#lv-g)"/>
+  <path d="M37 124 Q31 112 36 105 Q31 116 38 118 Q33 108 42 102" stroke="#ff9900" stroke-width="3" fill="none" opacity=".65" filter="url(#lv-g)"/>
+  <path d="M81 124 Q87 112 82 105 Q87 116 80 118 Q85 108 76 102" stroke="#ff7700" stroke-width="3" fill="none" opacity=".65" filter="url(#lv-g)"/>
+  <path d="M19 96 Q14 77 18 61 Q26 44 46 38 Q59 34 72 38 Q90 44 100 61 Q104 77 100 96 Q92 113 59 120 Q26 113 19 96 Z" fill="#3a2218" stroke="#5a3a28" stroke-width="1.8"/>
+  <path d="M44 55 Q38 64 40 78 Q42 89 46 101" stroke="#ff6600" stroke-width="2.2" fill="none" filter="url(#lv-g)" opacity=".8"/>
+  <path d="M72 55 Q78 64 76 78 Q74 89 72 101" stroke="#ff4400" stroke-width="2" fill="none" filter="url(#lv-g)" opacity=".8"/>
+  <path d="M52 88 Q58 84 59 88 Q60 84 66 88" stroke="#ff9900" stroke-width="1.8" fill="none" filter="url(#lv-g)" opacity=".7"/>
+  <circle cx="59" cy="77" r="17" fill="url(#lv-c)" filter="url(#lv-g)" opacity=".92"/>
+  <circle cx="59" cy="77" r="10" fill="#ffee00" filter="url(#lv-g)"/>
+  <path d="M27 48 Q27 17 59 11 Q91 17 91 48 Q91 72 59 78 Q27 72 27 48 Z" fill="#3a2218" stroke="#5a3a28" stroke-width="1.8"/>
+  <path d="M32 37 L27 26 L35 33 L33 20 L42 31" stroke="#5a3a28" stroke-width="1.8" fill="none"/>
+  <path d="M86 37 L91 26 L83 33 L85 20 L76 31" stroke="#5a3a28" stroke-width="1.8" fill="none"/>
+  <path d="M31 37 Q44 31 59 33 Q74 31 87 37" stroke="#2a1a10" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="43" cy="43" rx="10.5" ry="10.5" fill="#1a0800"/><ellipse cx="75" cy="43" rx="10.5" ry="10.5" fill="#1a0800"/>
+  <ellipse cx="43" cy="43" rx="8" ry="8" fill="url(#lv-e)" filter="url(#lv-g)"/><ellipse cx="75" cy="43" rx="8" ry="8" fill="url(#lv-e)" filter="url(#lv-g)"/>
+  <circle cx="43" cy="43" r="3.2" fill="#ffffff" opacity=".92"/><circle cx="75" cy="43" r="3.2" fill="#ffffff" opacity=".92"/>
+  <path d="M38 60 Q46 68 59 66 Q72 68 80 60" stroke="#5a3a28" stroke-width="2.2" fill="none"/>
+  <path d="M55 65 Q54 71 53 76" stroke="#ff6600" stroke-width="2.2" fill="none" filter="url(#lv-g)"/>
+  <path d="M59 66 Q59 73 58 78" stroke="#ff4400" stroke-width="2.5" fill="none" filter="url(#lv-g)"/>
+  <path d="M19 61 Q8 67 6 82 Q8 95 19 96" fill="#3a2218" stroke="#5a3a28" stroke-width="1.5"/>
+  <path d="M100 61 Q111 67 113 82 Q111 95 100 96" fill="#3a2218" stroke="#5a3a28" stroke-width="1.5"/>
+  <circle cx="6" cy="86" r="11" fill="#3a2218" stroke="#5a3a28" stroke-width="1.5"/>
+  <circle cx="112" cy="86" r="11" fill="#3a2218" stroke="#5a3a28" stroke-width="1.5"/>
+  <circle cx="6" cy="86" r="6" fill="#cc4400" filter="url(#lv-g)" opacity=".65"/>
+  <circle cx="112" cy="86" r="6" fill="#cc4400" filter="url(#lv-g)" opacity=".65"/>
+</svg>`,
+
+dragon:`<svg viewBox="0 0 134 145" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="dr-b" cx="50%" cy="40%"><stop offset="0%" stop-color="#2a7040"/><stop offset="100%" stop-color="#0a2818"/></radialGradient><radialGradient id="dr-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ffee00"/><stop offset="55%" stop-color="#cc8800"/><stop offset="100%" stop-color="#6a3000"/></radialGradient><filter id="dr-g"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+  <ellipse cx="67" cy="140" rx="36" ry="5.5" fill="rgba(0,0,0,.35)"/>
+  <path d="M107 104 Q122 97 128 81 Q124 85 118 81 Q126 73 120 63 Q116 71 111 67 Q116 57 108 52" stroke="#1a5028" stroke-width="7.5" fill="none" stroke-linecap="round"/>
+  <polygon points="108,49 102,57 114,57" fill="#2a6030"/>
+  <path d="M17 63 Q4 47 8 28 Q16 11 30 19 Q20 29 23 45 Q27 53 36 57" fill="#1a5028" stroke="#0a3018" stroke-width="1.4"/>
+  <path d="M21 45 Q7 39 10 26 Q16 18 24 24" fill="rgba(18,55,28,.62)"/>
+  <path d="M117 63 Q130 47 126 28 Q118 11 104 19 Q114 29 111 45 Q107 53 98 57" fill="#1a5028" stroke="#0a3018" stroke-width="1.4"/>
+  <path d="M113 45 Q127 39 124 26 Q118 18 110 24" fill="rgba(18,55,28,.62)"/>
+  <path d="M28 87 Q24 68 28 53 Q36 39 53 34 Q67 29 81 34 Q98 39 106 53 Q110 68 106 87 Q98 110 67 116 Q36 110 28 87 Z" fill="url(#dr-b)" stroke="#0a3018" stroke-width="1.8"/>
+  <path d="M38 68 Q52 63 67 66 Q82 63 96 68 Q82 72 67 70 Q52 72 38 68 Z" fill="#1a4020" opacity=".68"/>
+  <path d="M38 78 Q52 73 67 76 Q82 73 96 78 Q82 82 67 80 Q52 82 38 78 Z" fill="#1a4020" opacity=".58"/>
+  <path d="M30 43 Q30 12 67 6 Q104 12 104 43 Q104 69 67 75 Q30 69 30 43 Z" fill="url(#dr-b)" stroke="#0a3018" stroke-width="1.8"/>
+  <path d="M44 57 Q56 66 67 64 Q78 66 90 57 Q84 71 67 73 Q50 71 44 57 Z" fill="#1a5028"/>
+  <ellipse cx="57" cy="62" rx="4.5" ry="3.2" fill="#0a2818"/><ellipse cx="77" cy="62" rx="4.5" ry="3.2" fill="#0a2818"/>
+  <path d="M40 18 L33 5 L40 14 L38 2 L46 11" fill="#1a3018"/><path d="M94 18 L101 5 L94 14 L96 2 L88 11" fill="#1a3018"/>
+  <path d="M52 7 L50 0 L56 6" fill="#1a4020"/><path d="M67 4 L67 -3 L71 4" fill="#1a4020"/><path d="M82 7 L84 0 L78 6" fill="#1a4020"/>
+  <path d="M34 30 Q48 24 67 26 Q86 24 100 30" stroke="#0a2818" stroke-width="4.8" fill="none" stroke-linecap="round"/>
+  <ellipse cx="47" cy="36" rx="12" ry="12" fill="#0a1808"/><ellipse cx="87" cy="36" rx="12" ry="12" fill="#0a1808"/>
+  <ellipse cx="47" cy="36" rx="8.5" ry="8.5" fill="url(#dr-e)" filter="url(#dr-g)"/><ellipse cx="87" cy="36" rx="8.5" ry="8.5" fill="url(#dr-e)" filter="url(#dr-g)"/>
+  <rect x="46" y="30" width="2.2" height="12" rx="1.1" fill="#1a0800"/><rect x="86" y="30" width="2.2" height="12" rx="1.1" fill="#1a0800"/>
+  <path d="M44 58 Q56 68 67 66 Q78 68 90 58" stroke="#0a2818" stroke-width="1.9" fill="rgba(8,25,8,.5)"/>
+  <polygon points="50,60 47,67 53,65" fill="#e8f0b0"/><polygon points="60,62 58,69 62,67" fill="#e8f0b0"/><polygon points="72,62 70,69 74,67" fill="#e8f0b0"/><polygon points="84,60 81,67 87,65" fill="#e8f0b0"/>
+  <path d="M42 19 L40 11 L48 17 L52 8 L58 17 L67 11 L76 17 L80 8 L84 17 L92 11 L90 19" fill="#d4a017" stroke="#8a6000" stroke-width="1.4"/>
+  <ellipse cx="67" cy="19" rx="27" ry="6" fill="#d4a017" stroke="#8a6000" stroke-width="1.4"/>
+  <circle cx="52" cy="16" r="2.8" fill="#e74c3c"/><circle cx="67" cy="13" r="3.8" fill="#3498db"/><circle cx="82" cy="16" r="2.8" fill="#2ecc71"/>
+  <path d="M28 87 Q15 85 11 97 Q13 109 28 109" fill="#1a5028" stroke="#0a3018" stroke-width="1.3"/>
+  <path d="M106 87 Q119 85 123 97 Q121 109 106 109" fill="#1a5028" stroke="#0a3018" stroke-width="1.3"/>
+</svg>`,
+
+lich:`<svg viewBox="0 0 124 158" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="lk-a" cx="50%" cy="50%"><stop offset="0%" stop-color="rgba(130,0,215,.32)"/><stop offset="100%" stop-color="rgba(18,0,55,0)"/></radialGradient><radialGradient id="lk-e" cx="50%" cy="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="30%" stop-color="#cc88ff"/><stop offset="100%" stop-color="#260058"/></radialGradient><radialGradient id="lk-o" cx="50%" cy="30%"><stop offset="0%" stop-color="#eeccff"/><stop offset="50%" stop-color="#8800cc"/><stop offset="100%" stop-color="#280050"/></radialGradient><filter id="lk-g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="lk-s"><feGaussianBlur stdDeviation="5"/></filter></defs>
+  <ellipse cx="62" cy="78" rx="58" ry="68" fill="url(#lk-a)" filter="url(#lk-s)"/>
+  <path d="M13 87 Q6 78 10 67 Q14 75 12 83 Q17 72 21 77" stroke="rgba(130,0,215,.42)" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#lk-g)"/>
+  <path d="M111 87 Q118 78 114 67 Q110 75 112 83 Q107 72 103 77" stroke="rgba(130,0,215,.42)" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#lk-g)"/>
+  <path d="M21 77 Q17 96 19 128 Q25 144 62 148 Q99 144 105 128 Q107 96 103 77 Q90 64 62 62 Q34 64 21 77 Z" fill="rgba(12,0,30,.97)" stroke="rgba(90,0,155,.62)" stroke-width="1.5" filter="url(#lk-g)"/>
+  <path d="M25 132 Q20 143 22 150" stroke="rgba(105,0,165,.52)" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+  <path d="M38 142 Q35 152 38 158" stroke="rgba(85,0,145,.42)" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <path d="M52 146 Q52 156 50 162" stroke="rgba(105,0,165,.44)" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M72 146 Q72 156 74 162" stroke="rgba(85,0,145,.44)" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M86 142 Q89 152 86 158" stroke="rgba(85,0,145,.42)" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+  <path d="M99 132 Q104 143 102 150" stroke="rgba(105,0,165,.52)" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+  <text x="48" y="97" font-size="11" fill="rgba(155,0,255,.38)" filter="url(#lk-g)">⛧</text>
+  <text x="66" y="114" font-size="9" fill="rgba(155,0,255,.32)" filter="url(#lk-g)">☽</text>
+  <text x="44" y="128" font-size="8" fill="rgba(155,0,255,.3)" filter="url(#lk-g)">✦</text>
+  <path d="M21 77 Q12 83 8 96 Q12 106 21 102" fill="rgba(195,185,165,.92)" stroke="#888" stroke-width="1"/>
+  <rect x="2" y="90" width="6.5" height="9.5" rx="2.2" fill="#c8c0b0"/><rect x="6.5" y="88" width="5.5" height="10.5" rx="2.2" fill="#c8c0b0"/><rect x="11.5" y="90" width="4.5" height="8.5" rx="2.2" fill="#c8c0b0"/>
+  <ellipse cx="62" cy="37" rx="25" ry="27" fill="#d0c8b8" stroke="#aaa0a0" stroke-width="1.4"/>
+  <ellipse cx="44" cy="31" rx="8" ry="5.5" fill="#c0b8a8"/><ellipse cx="80" cy="31" rx="8" ry="5.5" fill="#c0b8a8"/>
+  <path d="M38 13 L34 4 L42 11 L44 2 L50 10 L56 3 L62 12 L68 3 L74 10 L80 2 L82 11 L90 4 L86 13" fill="#d0c8b8" stroke="#999890" stroke-width="1.4"/>
+  <circle cx="44" cy="9" r="3.2" fill="#8b5cf6" filter="url(#lk-g)"/>
+  <circle cx="62" cy="6" r="4.2" fill="#e74c3c" filter="url(#lk-g)"/>
+  <circle cx="80" cy="9" r="3.2" fill="#8b5cf6" filter="url(#lk-g)"/>
+  <ellipse cx="47" cy="29" rx="9" ry="10" fill="#1a0838"/><ellipse cx="77" cy="29" rx="9" ry="10" fill="#1a0838"/>
+  <ellipse cx="47" cy="29" rx="6.2" ry="7" fill="url(#lk-e)" filter="url(#lk-g)"/><ellipse cx="77" cy="29" rx="6.2" ry="7" fill="url(#lk-e)" filter="url(#lk-g)"/>
+  <path d="M59 39 L62 44 L65 39 L62 37 Z" fill="#1a0838"/>
+  <rect x="49" y="48" width="4" height="6" rx="1.2" fill="#e0d8c8"/><rect x="54" y="48" width="4.5" height="7" rx="1.2" fill="#e0d8c8"/><rect x="59.5" y="48" width="4.5" height="7" rx="1.2" fill="#e0d8c8"/><rect x="65" y="48" width="4" height="6" rx="1.2" fill="#e0d8c8"/>
+  <path d="M62 11 L60 18 L64 22 L62 29" stroke="#8a8070" stroke-width="1.2" fill="none"/>
+  <rect x="102" y="14" width="5.5" height="78" rx="2" fill="#3a1060" stroke="#5a20a0" stroke-width="1.2"/>
+  <rect x="103.5" y="34" width="4" height="3" rx="1" fill="#8b5cf6" opacity=".7"/>
+  <rect x="103.5" y="48" width="4" height="3" rx="1" fill="#8b5cf6" opacity=".65"/>
+  <rect x="103.5" y="62" width="4" height="3" rx="1" fill="#8b5cf6" opacity=".6"/>
+  <circle cx="104" cy="12" r="15" fill="url(#lk-o)" filter="url(#lk-g)"/>
+  <circle cx="104" cy="12" r="9" fill="rgba(225,185,255,.58)" filter="url(#lk-g)"/>
+  <circle cx="100" cy="10" r="2.4" fill="rgba(48,0,78,.82)"/>
+  <circle cx="108" cy="10" r="2.4" fill="rgba(48,0,78,.82)"/>
+  <path d="M100 15 Q104 18 108 15" stroke="rgba(48,0,78,.82)" stroke-width="1.3" fill="none"/>
+  <circle cx="30" cy="68" r="6" fill="rgba(145,0,260,.52)" filter="url(#lk-g)"/>
+  <circle cx="94" cy="64" r="5" fill="rgba(185,0,255,.42)" filter="url(#lk-g)"/>
+</svg>`
+};
+
+// HERO SVG
+const HERO=`<svg viewBox="0 0 72 98" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="hr-v" cx="50%" cy="50%"><stop offset="0%" stop-color="#6699ff"/><stop offset="100%" stop-color="#2244aa"/></radialGradient></defs>
+  <ellipse cx="36" cy="94" rx="19" ry="3.5" fill="rgba(0,0,0,.28)"/>
+  <path d="M20 40 Q10 54 12 70 L20 68 Z" fill="#cc2244"/>
+  <path d="M52 40 Q62 54 60 70 L52 68 Z" fill="#cc2244"/>
+  <rect x="20" y="40" width="32" height="30" rx="4" fill="#4466aa" stroke="#2244aa" stroke-width="1.5"/>
+  <path d="M20 50 Q26 46 36 48 Q46 46 52 50" fill="none" stroke="#6688cc" stroke-width="1.2"/>
+  <path d="M20 59 Q26 55 36 57 Q46 55 52 59" fill="none" stroke="#6688cc" stroke-width="1.2"/>
+  <rect x="26" y="40" width="20" height="6" rx="2" fill="#3355aa"/>
+  <ellipse cx="36" cy="28" rx="17" ry="17" fill="#5577bb" stroke="#2244aa" stroke-width="1.5"/>
+  <path d="M20 24 Q25 17 36 15 Q47 17 52 24 L52 20 Q47 11 36 9 Q25 11 20 20 Z" fill="#3355aa"/>
+  <rect x="23" y="24" width="26" height="7" rx="2.5" fill="#1a1a3a"/>
+  <rect x="24" y="25" width="24" height="5" rx="1.5" fill="url(#hr-v)" opacity=".82"/>
+  <rect x="53" y="38" width="6" height="19" rx="2.5" fill="#5577bb"/>
+  <rect x="57" y="15" width="4.5" height="38" rx="1.5" fill="#aaaaaa" stroke="#888" stroke-width="1"/>
+  <rect x="51" y="29" width="18" height="4" rx="1.5" fill="#cc9922"/>
+  <polygon points="59.5,11 57,15 62,15" fill="#dddddd"/>
+  <rect x="12" y="38" width="6" height="19" rx="2.5" fill="#5577bb"/>
+  <ellipse cx="9" cy="50" rx="7" ry="9" fill="#cc2244" stroke="#881122" stroke-width="1.5"/>
+  <text x="9" y="53" text-anchor="middle" font-size="7" fill="#ffcc00">✦</text>
+  <rect x="23" y="70" width="11" height="19" rx="3" fill="#3355aa"/><rect x="38" y="70" width="11" height="19" rx="3" fill="#3355aa"/>
+  <rect x="22" y="85" width="13" height="8" rx="2" fill="#223366"/><rect x="37" y="85" width="13" height="8" rx="2" fill="#223366"/>
+</svg>`;
+
+// BOSS ATTACK PATTERNS
+const BOSS_DATA={
+  dragon:{phases:[{hp:.5,name:'🔥 ENRAGED',cls:'enr',desc:'Dragon BREATHES FIRE!',dmg:1},{hp:.25,name:'💥 RAMPAGE',cls:'bsk',desc:'WINGS SWEEP THE ARENA!',dmg:2}],msgs:['Fire breath! -{d} HP!','Dragon claw! -{d}!','Tail whip! -{d} HP!']},
+  lich:{phases:[{hp:.6,name:'💀 NECROMANCY',cls:'enr',desc:'Lich raises the dead!',dmg:1},{hp:.35,name:'⛧ LICH NOVA',cls:'bsk',desc:'DARK ENERGY EXPLODES!',dmg:2},{hp:.15,name:'☠ DOOM',cls:'doom',desc:'DOOM SPELL! Pure death!',dmg:3}],msgs:['Death bolt! -{d} HP!','Necro curse -{d}!','Soul rend! -{d} HP!']},
+};
+
+const MONS=[
+  {name:'Bone Scout',type:'Undead Vanguard',svg:'skeleton',hp:3,boss:false},
+  {name:'Goblin Mage',type:'Dark Hexcaster',svg:'goblin',hp:4,boss:false},
+  {name:'Stone Troll',type:'Ancient Brute',svg:'troll',hp:5,boss:false},
+  {name:'Shadow Wraith',type:'Spectral Horror',svg:'ghost',hp:5,boss:false},
+  {name:'Lava Golem',type:'Infernal Elemental',svg:'lava',hp:6,boss:false},
+  {name:'Dragon Guard',type:'Wyrm Commander',svg:'dragon',hp:7,boss:true},
+  {name:'The Lich King',type:'Undead Overlord',svg:'lich',hp:9,boss:true},
+];
+
+// ══════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════
+let G={}, timerInt=null, ansLocked=false, rafId=null;
+
+// ══════════════════════════════════════════════════════════
+//  AUDIO
+// ══════════════════════════════════════════════════════════
+let actx=null,mGn=null,sGn=null,musOn=false;
+function initAudio(){
+  if(actx)return;
+  actx=new(window.AudioContext||window.webkitAudioContext)();
+  mGn=actx.createGain();mGn.gain.value=CFG.musVol;mGn.connect(actx.destination);
+  sGn=actx.createGain();sGn.gain.value=CFG.sfxVol;sGn.connect(actx.destination);
+  if(CFG.musOn)startMus();
+}
+function startMus(){
+  if(!actx||musOn)return;musOn=true;
+  document.querySelectorAll('.vb').forEach(b=>b.classList.remove('pau'));
+  ['sawtooth','sine'].forEach((t,i)=>{const o=actx.createOscillator(),g=actx.createGain(),f=actx.createBiquadFilter();o.type=t;o.frequency.value=55+i*.7;f.type='lowpass';f.frequency.value=330;g.gain.value=i?0.055:0.035;o.connect(f);f.connect(g);g.connect(mGn);o.start();});
+  const bn=[55,65.4,73.4,82.4];let bi=0;
+  (function beat(){if(!musOn)return;const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=bn[bi%4];g.gain.setValueAtTime(.1,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.38);o.connect(g);g.connect(mGn);o.start();o.stop(actx.currentTime+.42);bi++;setTimeout(beat,500);})();
+  const pn=[146.8,174.6,196,220,261.6,293.7,349.2];let ai=0,ad=1;
+  (function arp(){if(!musOn)return;const o=actx.createOscillator(),g=actx.createGain(),f=actx.createBiquadFilter();o.type='square';o.frequency.value=pn[ai];f.type='bandpass';f.frequency.value=680;f.Q.value=2;g.gain.setValueAtTime(.019,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.15);o.connect(f);f.connect(g);g.connect(mGn);o.start();o.stop(actx.currentTime+.17);ai+=ad;if(ai>=pn.length-1||ai<=0)ad*=-1;setTimeout(arp,200+Math.random()*75);})();
+}
+function stopMus(){musOn=false;document.querySelectorAll('.vb').forEach(b=>b.classList.add('pau'));}
+function toggleMusic(){initAudio();CFG.musOn=!CFG.musOn;CFG.musOn?startMus():stopMus();}
+function sfx(t){
+  if(!actx)return;const n=actx.currentTime;
+  const mk=(tp,f1,vol,dur,f2)=>{const o=actx.createOscillator(),g=actx.createGain();o.type=tp;o.frequency.setValueAtTime(f1,n);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+dur);g.gain.setValueAtTime(vol,n);g.gain.exponentialRampToValueAtTime(.001,n+dur);o.connect(g);g.connect(sGn);o.start(n);o.stop(n+dur+.02);};
+  if(t==='ok'){mk('sine',440,.16,.17);setTimeout(()=>{if(actx){const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=660;g.gain.setValueAtTime(.12,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.17);o.connect(g);g.connect(sGn);o.start();o.stop(actx.currentTime+.19);}},80);}
+  else if(t==='bad'){mk('square',200,.2,.24,55);}
+  else if(t==='boss'){mk('sawtooth',110,.26,.55,65);setTimeout(()=>{if(actx)mk('square',150,.1,.26);},220);}
+  else if(t==='combo'){[440,550,660,880].forEach((f,i)=>setTimeout(()=>{if(actx)mk('sine',f,.14,.22);},i*65));}
+  else if(t==='gold'){mk('triangle',880,.08,.14);setTimeout(()=>{if(actx)mk('triangle',1100,.07,.13);},55);}
+  else if(t==='win'){[261.6,329.6,392,523.2].forEach((f,i)=>setTimeout(()=>{if(actx)mk('sine',f,.12,.36);},i*100));}
+  else if(t==='lose'){mk('sawtooth',200,.16,.52,45);}
+  else if(t==='boost'){mk('triangle',660,.13,.22);}
+  else if(t==='rage'){[90,70,80,60].forEach((f,i)=>setTimeout(()=>{if(actx)mk('sawtooth',f,.13,.24);},i*80));}
+}
+
+// ══════════════════════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function openPanel(id){
+  // close all panels first
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+function closePanel(id){document.getElementById(id).style.display='none';}
+function setDiff(d){CFG.diff=d;['sq','kn','ch','lg'].forEach(x=>document.getElementById('do-'+x).classList.toggle('sel',x===d));}
+function togS(k){CFG[k]=!CFG[k];document.getElementById('tog-'+k).classList.toggle('on',CFG[k]);}
+function setMV(v){CFG.musVol=v/100;document.getElementById('s-mv-v').textContent=v;if(mGn)mGn.gain.value=CFG.musVol;}
+function setSV(v){CFG.sfxVol=v/100;document.getElementById('s-sv-v').textContent=v;if(sGn)sGn.gain.value=CFG.sfxVol;}
+function setTD(v){CFG.td=parseInt(v);document.getElementById('s-td-v').textContent=v+'s';}
+
+// ══════════════════════════════════════════════════════════
+//  TITLE SCREEN STARS
+// ══════════════════════════════════════════════════════════
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<55;i++){const s=document.createElement('div');s.className='star';const sz=Math.random()*2+.4;s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-duration:${1.4+Math.random()*3}s;animation-delay:${Math.random()*3}s;opacity:${Math.random()*.8+.2}`;c.appendChild(s);}
+})();
+
+// ══════════════════════════════════════════════════════════
+//  DUNGEON CANVAS DRAW
+// ══════════════════════════════════════════════════════════
+let ptcArr=[];
+function initParticles(){ptcArr=[];for(let i=0;i<40;i++)ptcArr.push({x:Math.random()*500,y:Math.random()*230,r:Math.random()*1.3+.3,sp:Math.random()*.45+.08,op:Math.random()});}
+function drawDungeon(){
+  const cv=document.getElementById('dc');if(!cv)return;
+  const ctx=cv.getContext('2d'),w=500,h=400;
+  ctx.clearRect(0,0,w,h);
+  // Sky
+  const sk=ctx.createLinearGradient(0,0,0,h*.58);
+  sk.addColorStop(0,'#07030e');sk.addColorStop(1,'#180830');
+  ctx.fillStyle=sk;ctx.fillRect(0,0,w,h*.65);
+  // Brick rows
+  for(let r=0;r<9;r++){
+    const off=r%2===0?0:34;
+    for(let c=-1;c<8;c++){ctx.strokeStyle='rgba(255,255,255,.038)';ctx.lineWidth=1;ctx.strokeRect(c*68+off,r*36+6,66,34);}
+  }
+  // Torch glow
+  [55,445].forEach(tx=>{const gr=ctx.createRadialGradient(tx,68,0,tx,68,110);gr.addColorStop(0,'rgba(255,148,28,.2)');gr.addColorStop(1,'transparent');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h*.65);});
+  // Torch flames (simple triangles)
+  [55,445].forEach(tx=>{
+    ctx.fillStyle='rgba(255,200,60,.7)';ctx.beginPath();ctx.moveTo(tx,56);ctx.lineTo(tx-5,68);ctx.lineTo(tx+5,68);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(255,100,10,.5)';ctx.beginPath();ctx.moveTo(tx,50);ctx.lineTo(tx-3,64);ctx.lineTo(tx+3,64);ctx.closePath();ctx.fill();
+  });
+  // Pillars
+  ctx.fillStyle='rgba(22,14,6,.65)';ctx.fillRect(0,0,30,h*.63);ctx.fillRect(w-30,0,30,h*.63);
+  // Floor
+  const fl=ctx.createLinearGradient(0,h*.6,0,h*.8);fl.addColorStop(0,'#2a1a0a');fl.addColorStop(1,'#150800');
+  ctx.fillStyle=fl;ctx.fillRect(0,h*.6,w,h*.22);
+  ctx.strokeStyle='#4a3010';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(0,h*.6);ctx.lineTo(w,h*.6);ctx.stroke();
+  for(let i=0;i<7;i++){ctx.fillStyle='rgba(255,255,255,.018)';ctx.fillRect(i*72,h*.6,70,h*.22);}
+  // Particles
+  ptcArr.forEach(p=>{p.y-=p.sp;p.op+=.016;if(p.y<0||p.op>1){p.y=h*.58;p.x=Math.random()*w;p.op=0;}ctx.fillStyle=`rgba(212,160,23,${p.op*.28})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});
+}
+
+// ══════════════════════════════════════════════════════════
+//  GAME INIT
+// ══════════════════════════════════════════════════════════
+function startGame(){
+  initAudio();
+  document.querySelectorAll('.panel').forEach(p=>p.style.display='none');
+  const d=DIFFS[CFG.diff];
+  clearInterval(timerInt);if(rafId)cancelAnimationFrame(rafId);
+  G={
+    hp:d.hp,maxHp:d.hp,gold:0,streak:0,correct:0,total:0,
+    killed:0,startT:Date.now(),floor:0,totalF:MONS.length*2+1,
+    d,score:0,
+    boosts:{freeze:1,double:1,shield:1,fifty:1,heal:1},
+    dblAct:false,shdAct:false,frzUsed:false,
+    bPhase:0,bRage:0,bEnraged:false,bBerserk:false,bAtking:false,
+    mHp:0,mMax:0,curMon:null,bData:null,
+  };
+  ansLocked=false;
+  initParticles();
+  showScreen('s-game');
+  // Start render loop
+  (function loop(){rafId=requestAnimationFrame(loop);drawDungeon();})();
+  loadFloor();
+}
+function stopGame(){clearInterval(timerInt);if(rafId)cancelAnimationFrame(rafId);musOn=false;document.querySelectorAll('.vb').forEach(b=>b.classList.add('pau'));showScreen('s-title');}
+
+// ══════════════════════════════════════════════════════════
+//  BOOST BAR
+// ══════════════════════════════════════════════════════════
+function renderBoosts(){
+  document.getElementById('boost-row').innerHTML=Object.entries(BD).map(([k,b])=>{
+    const c=G.boosts[k]||0;
+    return`<div class="bst${c===0?' dep':''}" onclick="useBoost('${k}')" data-tip="${b.tip}">
+      <span style="font-size:17px">${b.i}</span>
+      ${c>0?`<div class="bst-cnt">${c}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function useBoost(k){
+  if(!G.boosts[k]||G.boosts[k]<=0||ansLocked)return;
+  sfx('boost');G.boosts[k]--;
+  if(k==='freeze'){G.frzUsed=true;showSay('❄️ +5 seconds!',44,168,1400);}
+  else if(k==='double'){G.dblAct=true;showSay('⚡ Double damage!',44,168,1400);}
+  else if(k==='shield'){G.shdAct=true;showSay('🛡️ Shield active!',44,168,1400);}
+  else if(k==='fifty'){const btns=[...document.querySelectorAll('.abtn:not([disabled])')];const wr=btns.filter(b=>parseInt(b.dataset.val)!==G.q?.ans);wr.slice(0,2).forEach(b=>{b.style.opacity='.18';b.disabled=true;});showSay('🎯 50/50!',44,168,1400);}
+  else if(k==='heal'){G.hp=Math.min(G.maxHp,G.hp+2);updateHUD();floatNum('+2❤️','#59c059',200,180);}
+  renderBoosts();
+}
+
+// ══════════════════════════════════════════════════════════
+//  LOAD FLOOR
+// ══════════════════════════════════════════════════════════
+function loadFloor(){
+  ansLocked=false;clearInterval(timerInt);
+  G.frzUsed=false;G.bPhase=0;G.bRage=0;G.bEnraged=false;G.bBerserk=false;G.bAtking=false;
+  const fl=G.floor;
+  const mIdx=fl>=G.totalF-1?MONS.length-1:fl%(MONS.length-1);
+  const mon=MONS[mIdx];
+  G.curMon=mon;G.mHp=mon.hp;G.mMax=mon.hp;
+  G.bData=mon.svg==='dragon'?BOSS_DATA.dragon:mon.svg==='lich'?BOSS_DATA.lich:null;
+  // Monster sprite
+  const ms=document.getElementById('mspr');
+  ms.innerHTML=SVG[mon.svg];
+  ms.className='mon-spr';
+  // Hero
+  document.getElementById('hspr').innerHTML=HERO;
+  document.getElementById('hspr').className='hero-spr';
+  // Boss rage bar
+  document.getElementById('rage-outer').style.display=mon.boss?'block':'none';
+  // Mon info
+  document.getElementById('mname').textContent=mon.name+(mon.boss?' ⚔ BOSS':'');
+  document.getElementById('mtype').textContent=mon.type;
+  document.getElementById('mhpfill').style.width='100%';
+  document.getElementById('mhptxt').textContent=`${G.mHp}/${G.mMax} HP`;
+  // Phase badge
+  const pb=document.getElementById('phase-badge');pb.className='';pb.textContent='';pb.style.display='none';
+  renderBoosts();updateHUD();renderFloorDots();
+  // Immediately load question (no delay causing confusion)
+  showSay(mon.name+'!',270,60,1200);
+  setTimeout(()=>loadQ(),300);
+}
+
+// ══════════════════════════════════════════════════════════
+//  LOAD QUESTION  ← THE CORE FUNCTION
+// ══════════════════════════════════════════════════════════
+function loadQ(){
+  if(ansLocked)return;
+  G.total++;
+  const diff=getDiff();
+  const q=genQ(diff);G.q=q;
+  const modes=['spell','spell','timer','dodge','spell','timer','boss'];
+  let mode=modes[G.floor%modes.length];
+  if(G.curMon.boss)mode='boss';
+  G.mode=mode;
+  const fss=22; // fixed font size for clarity
+  const modeLabel={spell:'⚔ ATTACK SPELL',timer:'⏱ TIME ATTACK',dodge:'🎯 DODGE MODE',boss:'🔮 BOSS STRIKE'};
+  const modeCls={spell:'qm-sp',timer:'qm-ti',dodge:'qm-do',boss:'qm-bo'};
+  let hint='';
+  if(CFG.diff==='sq'&&mode!=='dodge')hint=`<div class="hint">💡 Hint: answer is <b>${q.ans}</b></div>`;
+  let html=`<div class="qmode ${modeCls[mode]}">${modeLabel[mode]}</div>${hint}`;
+  clearInterval(timerInt);
+  if(mode==='spell'){
+    const ws=mkW(q.ans,3);
+    const opts=[q.ans,...ws].sort(()=>Math.random()-.5);
+    html+=`<div class="qtext" style="font-size:${fss}px">Solve: <span class="qglow">${q.text} = ?</span></div>
+    <div class="ans-row">${opts.map(o=>`<button class="abtn" data-val="${o}" onclick="onSpell(${o},${q.ans},this)">${o}</button>`).join('')}</div>`;
+  } else if(mode==='timer'){
+    const dur=CFG.td+G.d.tb;let left=dur;
+    const ws=mkW(q.ans,3);
+    const opts=[q.ans,...ws].sort(()=>Math.random()-.5);
+    html+=`<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:4px"><div class="tnum" id="tnum">${left}</div><div style="flex:1"><div class="tbar-outer"><div class="tbar-inner" id="tfill" style="width:100%"></div></div></div></div>
+    <div class="qtext" style="font-size:${fss}px">Solve: <span class="qglow">${q.text} = ?</span></div>
+    <div class="ans-row">${opts.map(o=>`<button class="abtn" data-val="${o}" onclick="onTimer(${o},${q.ans},this)">${o}</button>`).join('')}</div>`;
+    document.getElementById('q-inner').innerHTML=html;
+    timerInt=setInterval(()=>{
+      if(G.frzUsed){G.frzUsed=false;left+=5;}
+      left--;
+      const el=document.getElementById('tnum'),bar=document.getElementById('tfill');
+      if(!el){clearInterval(timerInt);return;}
+      el.textContent=left;
+      if(bar)bar.style.width=(Math.max(0,left)/dur*100)+'%';
+      if(left<=3)el.classList.add('urg');
+      if(left<=0){clearInterval(timerInt);if(!ansLocked){ansLocked=true;sfx('bad');G.bRage=Math.min(5,G.bRage+1);checkBossPhase();heroHurt();if(G.curMon.boss&&G.bEnraged){bossAtk(()=>takeDmg(1,true,true));}else takeDmg(1,true);}}
+    },1000);
+    return; // already set innerHTML above
+  } else if(mode==='dodge'){
+    const step=ri(5)+2,start=ri(8);
+    const nums=[];for(let i=0;i<5;i++)nums.push(start+i*step);
+    const wi=Math.floor(Math.random()*5);
+    const dArr=[...nums];dArr[wi]+=ri(9)+1;
+    G.dw=wi;
+    const sh=dArr.map((v,i)=>({v,i})).sort(()=>Math.random()-.5);
+    html+=`<div class="qtext" style="font-size:${fss}px">Find the <span class="qglow">odd one out!</span></div>
+    <div class="dodge-row">${sh.map(({v,i})=>`<div class="dnum" data-oi="${i}" onclick="onDodge(${i},this)">${v}</div>`).join('')}</div>`;
+  } else if(mode==='boss'){
+    html+=`<div class="qtext" style="font-size:${fss}px">Boss Eq: <span class="qglow">${q.text} = ?</span></div>
+    <div style="text-align:center"><input class="sinp" id="b-inp" type="number" placeholder="?">
+    <button class="abtn" onclick="onBoss(${q.ans})" style="margin-left:8px;vertical-align:middle">⚡ Strike!</button></div>`;
+    document.getElementById('q-inner').innerHTML=html;
+    setTimeout(()=>{const inp=document.getElementById('b-inp');if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')onBoss(q.ans);});}},30);
+    return;
+  }
+  document.getElementById('q-inner').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════
+//  ANSWER HANDLERS
+// ══════════════════════════════════════════════════════════
+function onSpell(ch,cor,btn){
+  if(ansLocked)return;ansLocked=true;
+  if(ch===cor){btn.classList.add('cor');sfx('ok');G.correct++;heroAtk();dealDmg(1);}
+  else{btn.classList.add('wrg');sfx('bad');document.querySelectorAll('.abtn').forEach(b=>{if(+b.dataset.val===cor)b.classList.add('cor');});bossOnWrong();}
+}
+function onTimer(ch,cor,btn){
+  if(ansLocked)return;clearInterval(timerInt);ansLocked=true;
+  if(ch===cor){btn.classList.add('cor');sfx('ok');G.correct++;heroAtk();dealDmg(1);}
+  else{btn.classList.add('wrg');sfx('bad');document.querySelectorAll('.abtn').forEach(b=>{if(+b.dataset.val===cor)b.classList.add('cor');});bossOnWrong();}
+}
+function onDodge(oi,el){
+  if(ansLocked)return;ansLocked=true;
+  if(oi===G.dw){el.classList.add('cor');sfx('ok');G.correct++;heroAtk();dealDmg(1);}
+  else{el.classList.add('wrg');sfx('bad');document.querySelectorAll('.dnum').forEach(d=>{if(+d.dataset.oi===G.dw)d.classList.add('cor');});bossOnWrong();}
+}
+function onBoss(cor){
+  if(ansLocked)return;
+  const v=parseInt(document.getElementById('b-inp')?.value);
+  if(isNaN(v))return;
+  ansLocked=true;
+  if(v===cor){sfx('ok');G.correct++;heroAtk();dealDmg(1);}
+  else{sfx('bad');bossOnWrong();}
+}
+function bossOnWrong(){
+  heroHurt();G.bRage=Math.min(5,G.bRage+1);checkBossPhase();
+  if(G.curMon.boss&&G.bEnraged){bossAtk(()=>takeDmg(1,true,true));}else takeDmg(1);
+}
+
+// ══════════════════════════════════════════════════════════
+//  COMBAT
+// ══════════════════════════════════════════════════════════
+function dealDmg(d){
+  G.streak++;
+  if(G.dblAct){d*=2;G.dblAct=false;floatNum('×2!','#9966ff',310,150);renderBoosts();}
+  if(G.streak>=3&&CFG.cbo){showCombo();d=Math.max(d,2);G.streak=0;sfx('combo');}
+  G.mHp=Math.max(0,G.mHp-d);
+  updateMonHP();checkBossPhase();
+  const ms=document.getElementById('mspr');
+  if(ms){ms.classList.add('hit');setTimeout(()=>ms.classList.remove('hit'),380);}
+  floatNum('-'+d+'❤️','#ff6680',310,130);
+  G.score+=d*10*(G.streak+1);
+  if(G.mHp<=0){
+    if(ms)ms.classList.add('dead');
+    G.killed++;sfx('win');
+    setTimeout(()=>{document.getElementById('q-inner').innerHTML='<div style="color:#59c059;font-weight:700;font-size:16px;text-align:center;padding:20px">⚔ Monster defeated!</div>';handleFC();},700);
+  } else {
+    setTimeout(()=>{ansLocked=false;loadQ();},950);
+  }
+  updateHUD();
+}
+function takeDmg(d,skip,afterBoss){
+  if(afterBoss){if(G.hp>0)setTimeout(()=>{ansLocked=false;loadQ();},420);return;}
+  G.streak=0;
+  if(G.shdAct){G.shdAct=false;renderBoosts();floatNum('BLOCKED!','#4c97ff',180,180);setTimeout(()=>{ansLocked=false;loadQ();},880);return;}
+  if(G.d.oneshot)G.hp=0;else G.hp=Math.max(0,G.hp-d);
+  updateHUD();floatNum('-'+d+'💔','#ff0000',180,180);
+  if(CFG.shk){const st=document.getElementById('stage');st.classList.add('shk');setTimeout(()=>st.classList.remove('shk'),260);}
+  if(G.hp<=0){setTimeout(()=>showEnd(false),800);return;}
+  setTimeout(()=>{ansLocked=false;loadQ();},950);
+}
+
+// ══════════════════════════════════════════════════════════
+//  BOSS MECHANICS
+// ══════════════════════════════════════════════════════════
+function checkBossPhase(){
+  if(!G.curMon.boss||!G.bData)return;
+  const pct=G.mHp/G.mMax;
+  const rf=document.getElementById('ragefill');if(rf)rf.style.width=Math.min(100,G.bRage*20)+'%';
+  for(let i=G.bData.phases.length-1;i>=0;i--){
+    if(pct<=G.bData.phases[i].hp&&G.bPhase<=i){
+      G.bPhase=i+1;G.bEnraged=true;G.bBerserk=i>=1;
+      triggerBossPhase(G.bData.phases[i]);break;
+    }
+  }
+}
+function triggerBossPhase(phase){
+  sfx('rage');
+  const ms=document.getElementById('mspr');
+  if(ms){ms.classList.add('batkA');setTimeout(()=>ms.classList.remove('batkA'),560);}
+  const pb=document.getElementById('phase-badge');
+  pb.textContent=phase.name;pb.className=phase.cls;pb.style.display='block';
+  showBossFlash(`⚠️ ${phase.desc}`);
+}
+function bossAtk(cb){
+  if(!G.curMon.boss||!G.bEnraged||G.bAtking)return cb&&cb();
+  const pi=Math.min(G.bPhase-1,G.bData.phases.length-1);
+  const phase=G.bData.phases[pi];
+  let dmg=Math.ceil((phase?.dmg||1)*G.d.bAtkM);
+  G.bAtking=true;
+  const ms=document.getElementById('mspr');
+  if(ms){ms.classList.add('batkA');setTimeout(()=>ms.classList.remove('batkA'),560);}
+  const msg=(G.bData.msgs[Math.floor(Math.random()*G.bData.msgs.length)]||'Boss attacks! -{d}').replace('{d}',dmg);
+  sfx('boss');showBossFlash(msg);
+  setTimeout(()=>{
+    if(G.hp>0){
+      if(G.shdAct){G.shdAct=false;renderBoosts();floatNum('BLOCKED!','#4c97ff',180,180);}
+      else{G.hp=Math.max(0,G.hp-dmg);updateHUD();heroHurt();floatNum(`-${dmg}💔`,'#ff0000',180,180);if(CFG.shk){const st=document.getElementById('stage');st.classList.add('shk');setTimeout(()=>st.classList.remove('shk'),260);}if(G.hp<=0){G.bAtking=false;showEnd(false);return;}}
+    }
+    G.bAtking=false;cb&&cb();
+  },1150);
+}
+
+// ══════════════════════════════════════════════════════════
+//  FLOOR CLEAR → FUN EVENTS
+// ══════════════════════════════════════════════════════════
+function handleFC(){
+  const isLast=G.floor>=G.totalF-1;
+  if(isLast){showReward(true);return;}
+  if(G.floor>0&&G.floor%2===0){
+    const evts=['memory','wheel','chain','sliding','gamble','curse','shop','heal','don'];
+    showFunEvent(evts[Math.floor(Math.random()*evts.length)]);
+  } else showReward(false);
+}
+
+// ══════════════════════════════════════════════════════════
+//  FUN EVENTS
+// ══════════════════════════════════════════════════════════
+function openEv(ico,ttl,dsc){
+  const bx=document.getElementById('ev-box');
+  bx.innerHTML=`<span class="ev-ico">${ico}</span><div class="ev-ttl">${ttl}</div><div class="ev-dsc">${dsc}</div><div id="evb"></div>`;
+  document.getElementById('ev-ov').classList.add('show');
+  return document.getElementById('evb');
+}
+function closeEv(){document.getElementById('ev-ov').classList.remove('show');showReward(false);}
+function showFunEvent(t){({memory:evMem,wheel:evWheel,chain:evChain,sliding:evSlide,gamble:evGamble,curse:evCurse,shop:evShop,heal:evHeal,don:evDON})[t]?.();}
+
+function evMem(){
+  const w=openEv('🃏','Memory Match!','Find 4 matching math pairs!');
+  const pairs=[['2×3','6'],['4+5','9'],['10-3','7'],['8÷2','4']];
+  const all=[...pairs.flat()].sort(()=>Math.random()-.5);
+  let fl=[],mt=0,lk=false;
+  w.innerHTML=`<div class="mem-grid">${all.map((v,i)=>`<div class="mc" id="mc${i}" data-v="${v}" onclick="mf(${i})">?</div>`).join('')}</div><div id="ml" class="ev-log"></div><button class="eabtn" onclick="closeEv()" style="font-size:10px;margin-top:6px">Skip</button>`;
+  window.mf=function(i){if(lk||fl.includes(i))return;const el=document.getElementById('mc'+i);el.textContent=el.dataset.v;el.classList.add('flip');fl.push(i);if(fl.length===2){lk=true;const[a,b]=fl;const va=document.getElementById('mc'+a).dataset.v,vb=document.getElementById('mc'+b).dataset.v;const ok=pairs.some(p=>(p[0]===va&&p[1]===vb)||(p[0]===vb&&p[1]===va));if(ok){sfx('ok');mt++;['mc'+a,'mc'+b].forEach(id=>document.getElementById(id).classList.add('matched'));document.getElementById('ml').textContent=`Match! ${mt}/4`;document.getElementById('ml').style.color='#59c059';fl=[];lk=false;if(mt===4){const g=ri(20)+20;G.gold+=g;sfx('combo');document.getElementById('ml').textContent=`All matched! +${g} gold!`;updateHUD();setTimeout(closeEv,1500);}}else{sfx('bad');['mc'+a,'mc'+b].forEach(id=>document.getElementById(id).classList.add('bad'));document.getElementById('ml').textContent='No match!';document.getElementById('ml').style.color='#ff6680';setTimeout(()=>{[a,b].forEach(x=>{const e=document.getElementById('mc'+x);e.textContent='?';e.classList.remove('flip','bad');});fl=[];lk=false;},800);}}}
+}
+function evWheel(){
+  const w=openEv('🎰','Spin the Wheel!','Spin for a reward or curse!');
+  const segs=[{l:'+15G',c:'#ffab19',fn:()=>{G.gold+=15;return'+15 Gold!'}},{l:'+1HP',c:'#59c059',fn:()=>{G.hp=Math.min(G.maxHp,G.hp+1);updateHUD();return'+1 HP!'}},{l:'+25G',c:'#f0c040',fn:()=>{G.gold+=25;return'+25 Gold!'}},{l:'-1HP',c:'#ff6680',fn:()=>{G.hp=Math.max(1,G.hp-1);updateHUD();return'-1 HP!'}},{l:'Boost!',c:'#9966ff',fn:()=>{const k=Object.keys(G.boosts)[ri(5)-1];G.boosts[k]++;renderBoosts();return'Free Boost!'}},{l:'+10G',c:'#c0a030',fn:()=>{G.gold+=10;return'+10 Gold!'}},{l:'×2G!',c:'#4c97ff',fn:()=>{G.gold*=2;updateHUD();return'Gold DOUBLED!'}},{l:'−30%',c:'#992020',fn:()=>{G.gold=Math.floor(G.gold*.7);updateHUD();return'-30% Gold!'}}];
+  let sp=false;
+  w.innerHTML=`<div class="wh-wrap"><div class="wh-ptr">▼</div><div class="wh-ring" id="whr"><svg viewBox="-74 -74 148 148" width="142" height="142">${segs.map((s,i)=>{const a1=i/segs.length*360,a2=(i+1)/segs.length*360,r=71,r1=a1*Math.PI/180,r2=a2*Math.PI/180,x1=Math.cos(r1)*r,y1=Math.sin(r1)*r,x2=Math.cos(r2)*r,y2=Math.sin(r2)*r,mx=Math.cos((r1+r2)/2)*49,my=Math.sin((r1+r2)/2)*49;return`<path d="M0 0 L${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2} Z" fill="${s.c}" stroke="#111" stroke-width="1.5"/><text x="${mx}" y="${my}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="#fff" font-weight="bold">${s.l}</text>`;}).join('')}</svg></div></div><div id="wl" class="ev-log" style="margin-bottom:8px"></div><button class="eabtn" id="spinbtn" onclick="doSpin()">🎰 Spin!</button>`;
+  window.doSpin=function(){if(sp)return;sp=true;document.getElementById('spinbtn').disabled=true;const idx=Math.floor(Math.random()*segs.length);const deg=(5+Math.floor(Math.random()*4))*360+idx*(360/segs.length)+Math.random()*(360/segs.length);document.getElementById('whr').style.transform=`rotate(${deg}deg)`;setTimeout(()=>{const r=segs[idx].fn();sfx('combo');document.getElementById('wl').textContent=r;document.getElementById('wl').style.color='#ffab19';updateHUD();setTimeout(closeEv,1600);},2600);};
+}
+function evChain(){
+  const w=openEv('🔗','Math Chain!','Fill the blanks to earn gold!');
+  const s=ri(10)+2;const chain=[s];const steps=[];
+  for(let i=0;i<3;i++){const op=Math.random()<.5?'+':'-';const n=ri(8)+2;steps.push({op,n});chain.push(op==='+'?chain[chain.length-1]+n:Math.max(1,chain[chain.length-1]-n));}
+  const blanks=[1,3];
+  w.innerHTML=`<div class="chain-row">${chain.map((v,i)=>{if(blanks.includes(i))return`<input class="ci" id="ci${i}" type="number" placeholder="?" data-ans="${v}">${i<chain.length-1?`<div class="cb" style="font-size:11px;border:none;background:none;color:#aaa">${steps[i].op}${steps[i].n}</div>`:''}`; return`<div class="cb">${v}</div>${i<chain.length-1?`<div class="cb" style="font-size:11px;border:none;background:none;color:#aaa">${steps[i].op}${steps[i].n}</div>`:''}`}).join('')}</div><div id="cl" class="ev-log"></div><div style="display:flex;gap:7px;justify-content:center;margin-top:8px"><button class="eabtn" onclick="ckChain()">Check</button></div>`;
+  window.ckChain=function(){let ok=true;blanks.forEach(i=>{const el=document.getElementById('ci'+i);const v=parseInt(el.value),a=parseInt(el.dataset.ans);if(v===a)el.style.borderColor='#59c059';else{el.style.borderColor='#ff6680';ok=false;}});if(ok){const g=ri(25)+20;G.gold+=g;sfx('combo');document.getElementById('cl').textContent=`+${g} gold!`;document.getElementById('cl').style.color='#59c059';updateHUD();setTimeout(closeEv,1500);}else{sfx('bad');document.getElementById('cl').textContent='Wrong — try again!';document.getElementById('cl').style.color='#ff6680';}};
+}
+function evSlide(){
+  const w=openEv('🧩','Tile Puzzle!','Slide into 1–8 order for gold!');
+  let t=[1,2,3,4,5,6,7,8,0];for(let i=0;i<100;i++){const e=t.indexOf(0);const mv=[e-1,e+1,e-3,e+3].filter(x=>x>=0&&x<9&&(Math.abs(x-e)===3||(Math.abs(x-e)===1&&Math.floor(x/3)===Math.floor(e/3))));const m=mv[Math.floor(Math.random()*mv.length)];[t[e],t[m]]=[t[m],t[e]];}
+  function rnd(){document.getElementById('slg').innerHTML=t.map((v,i)=>`<div class="st${v===0?' empty':''}" onclick="${v===0?'':'sl('+i+')'}">${v||''}</div>`).join('');}
+  w.innerHTML=`<div class="slide-grid" id="slg"></div><div id="sll" class="ev-log"></div><button class="eabtn" onclick="closeEv()" style="font-size:10px;margin-top:6px">Skip</button>`;rnd();
+  window.sl=function(i){const e=t.indexOf(0);if(![e-1,e+1,e-3,e+3].includes(i)||!(Math.abs(i-e)===3||(Math.abs(i-e)===1&&Math.floor(i/3)===Math.floor(e/3))))return;[t[i],t[e]]=[t[e],t[i]];rnd();if(t.slice(0,8).every((v,i)=>v===i+1)&&t[8]===0){const g=ri(30)+30;G.gold+=g;sfx('combo');document.getElementById('sll').textContent=`Solved! +${g} gold!`;document.getElementById('sll').style.color='#59c059';updateHUD();setTimeout(closeEv,1500);}};
+}
+function evGamble(){
+  const w=openEv('💰','Treasure Gamble!','Guess 1–6 for gold or lose 1 HP!');
+  const sec=ri(6);
+  w.innerHTML=`<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:6px 0">${[1,2,3,4,5,6].map(n=>`<button class="eabtn" onclick="gp(${n},${sec},this)">${n}</button>`).join('')}</div><div id="gl" class="ev-log"></div>`;
+  window.gp=function(n,s,el){document.querySelectorAll('.eabtn').forEach(b=>b.disabled=true);if(n===s){el.classList.add('cor');sfx('combo');const g=ri(25)+20;G.gold+=g;document.getElementById('gl').textContent=`Correct! +${g} gold!`;document.getElementById('gl').style.color='#59c059';}else{el.classList.add('wrg');document.querySelectorAll('.eabtn').forEach(b=>{if(+b.textContent===s)b.classList.add('cor');});sfx('bad');G.hp=Math.max(1,G.hp-1);document.getElementById('gl').textContent=`Wrong! Secret: ${s}. -1 HP.`;document.getElementById('gl').style.color='#ff6680';}updateHUD();setTimeout(closeEv,1500);};
+}
+function evCurse(){
+  const w=openEv('🪄','Ancient Curse!','Answer correctly or take 2 damage!');
+  const q=genQ(getDiff());const ws=mkW(q.ans,3);const opts=[q.ans,...ws].sort(()=>Math.random()-.5);
+  w.innerHTML=`<div style="font-size:18px;font-weight:700;color:#ffab19;margin-bottom:8px;text-align:center">${q.text} = ?</div><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">${opts.map(o=>`<button class="eabtn" onclick="oc(${o},${q.ans},this)">${o}</button>`).join('')}</div><div id="crl" class="ev-log"></div>`;
+  window.oc=function(ch,cor,btn){document.querySelectorAll('.eabtn').forEach(b=>b.disabled=true);if(ch===cor){btn.classList.add('cor');sfx('ok');document.getElementById('crl').textContent='Curse broken!';document.getElementById('crl').style.color='#59c059';}else{btn.classList.add('wrg');document.querySelectorAll('.eabtn').forEach(b=>{if(+b.textContent===cor)b.classList.add('cor');});sfx('bad');G.hp=Math.max(1,G.hp-2);document.getElementById('crl').textContent=`Cursed! -2 HP. Answer: ${cor}.`;document.getElementById('crl').style.color='#ff6680';}updateHUD();setTimeout(closeEv,1500);};
+}
+function evShop(){
+  const w=openEv('🏪','Dungeon Shop!','Spend gold wisely!');
+  const items=[{i:'💉',n:'Heal Potion',d:'+3 HP',c:12,fn:()=>{G.hp=Math.min(G.maxHp,G.hp+3);updateHUD();}},{i:'❄️',n:'Freeze Scroll',d:'+1 boost',c:8,fn:()=>G.boosts.freeze++},{i:'⚡',n:'Power Rune',d:'+1 Double',c:10,fn:()=>G.boosts.double++},{i:'🛡️',n:'Iron Shield',d:'+1 Shield',c:9,fn:()=>G.boosts.shield++},{i:'💰',n:'Gold Idol',d:'+30 gold',c:15,fn:()=>G.gold+=30}];
+  w.innerHTML=`<div style="font-size:12px;color:#ffab19;font-weight:700;margin-bottom:8px">Gold: <span id="sg">${G.gold}</span></div>${items.map((it,i)=>`<div class="sh-item"><span style="font-size:18px;margin-right:7px">${it.i}</span><div><div class="sh-n">${it.n}</div><div class="sh-d">${it.d}</div></div><button class="eabtn" onclick="bi(${i})" style="font-size:10px;padding:5px 10px">${it.c}g</button></div>`).join('')}<div id="shl" class="ev-log"></div><button class="eabtn" onclick="closeEv()" style="font-size:10px;margin-top:7px">Leave</button>`;
+  window.bi=function(i){const it=items[i];if(G.gold<it.c){document.getElementById('shl').textContent='Not enough gold!';document.getElementById('shl').style.color='#ff6680';return;}G.gold-=it.c;it.fn();sfx('gold');updateHUD();renderBoosts();document.getElementById('sg').textContent=G.gold;document.getElementById('shl').textContent=`Got ${it.n}!`;document.getElementById('shl').style.color='#59c059';};
+}
+function evHeal(){
+  const w=openEv('✨','Healing Shrine!','Solve to restore 3 HP!');
+  const q=genQ(Math.max(1,getDiff()-1));const ws=mkW(q.ans,2);const opts=[q.ans,...ws].sort(()=>Math.random()-.5);
+  w.innerHTML=`<div style="font-size:18px;font-weight:700;color:#ffab19;margin-bottom:8px;text-align:center">${q.text} = ?</div><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">${opts.map(o=>`<button class="eabtn" onclick="oh(${o},${q.ans},this)">${o}</button>`).join('')}</div><div id="hl" class="ev-log"></div>`;
+  window.oh=function(ch,cor,btn){document.querySelectorAll('.eabtn').forEach(b=>b.disabled=true);if(ch===cor){btn.classList.add('cor');sfx('ok');G.hp=Math.min(G.maxHp,G.hp+3);updateHUD();document.getElementById('hl').textContent='+3 HP!';document.getElementById('hl').style.color='#59c059';}else{btn.classList.add('wrg');sfx('bad');document.getElementById('hl').textContent=`Wrong! Answer: ${cor}.`;document.getElementById('hl').style.color='#ff6680';}setTimeout(closeEv,1400);};
+}
+function evDON(){
+  const w=openEv('🎲','Double or Nothing!','Double gold or lose half!');
+  const q=genQ(getDiff());const ws=mkW(q.ans,1);const opts=[q.ans,...ws].sort(()=>Math.random()-.5);
+  w.innerHTML=`<div style="font-size:12px;color:#aaa;margin-bottom:6px;text-align:center">Gold: <span style="color:#ffab19;font-weight:700">${G.gold}</span></div><div style="font-size:18px;font-weight:700;color:#ffab19;margin-bottom:8px;text-align:center">${q.text} = ?</div><div style="display:flex;gap:8px;justify-content:center">${opts.map(o=>`<button class="eabtn" onclick="od(${o},${q.ans},this)">${o}</button>`).join('')}</div><div id="dl" class="ev-log"></div>`;
+  window.od=function(ch,cor,btn){document.querySelectorAll('.eabtn').forEach(b=>b.disabled=true);if(ch===cor){btn.classList.add('cor');sfx('combo');const p=G.gold;G.gold*=2;document.getElementById('dl').textContent=`${p}→${G.gold}! 🎉`;document.getElementById('dl').style.color='#ffab19';}else{btn.classList.add('wrg');sfx('bad');G.gold=Math.floor(G.gold/2);document.getElementById('dl').textContent=`Wrong! Answer: ${cor}. Gold: ${G.gold}.`;document.getElementById('dl').style.color='#ff6680';}updateHUD();setTimeout(closeEv,1600);};
+}
+
+// ══════════════════════════════════════════════════════════
+//  REWARD & END
+// ══════════════════════════════════════════════════════════
+function showReward(final){
+  if(rafId)cancelAnimationFrame(rafId);
+  const gld=G.curMon.boss?ri(32)+28:ri(14)+7;G.gold+=gld;sfx('gold');
+  let ex='';
+  if(G.floor%3===0&&G.floor>0){const k=Object.keys(G.boosts)[ri(5)-1];G.boosts[k]++;ex+=`<div style="color:#9966ff;font-size:11px;font-weight:700;margin:3px 0">${BD[k].i} +1 ${BD[k].n} Boost!</div>`;}
+  if(G.floor%3===2&&G.hp<G.maxHp){G.hp=Math.min(G.maxHp,G.hp+1);ex+=`<div style="color:#59c059;font-size:11px;font-weight:700;margin:3px 0">✨ +1 HP restored!</div>`;}
+  showScreen('s-reward');
+  document.getElementById('rw-box').innerHTML=`<span class="rw-ico">${final?'🏆':'💰'}</span><div class="rw-ttl">${G.curMon.name} Defeated!</div><div class="rw-dsc">"${vq()}"</div><div class="rw-gld">+${gld} Gold</div>${ex}<div class="rw-bgs">${G.streak>=3?'<div class="rwbg" style="background:#ffab19">🔥 Combo</div>':''}${G.correct===G.total?'<div class="rwbg" style="background:#59c059">💎 Perfect</div>':''}</div><button class="abtn" onclick="${final?'showEnd(true)':'nextFloor()'}"> ${final?'🏆 Victory!':'▶ Next Floor'}</button><br><button class="abtn" onclick="stopGame()" style="background:#555;border-color:#333;font-size:11px;margin-top:6px">⬛ Menu</button>`;
+}
+function nextFloor(){G.floor++;showScreen('s-game');(function loop(){rafId=requestAnimationFrame(loop);drawDungeon();})();loadFloor();}
+function showEnd(win){
+  clearInterval(timerInt);if(rafId)cancelAnimationFrame(rafId);
+  const acc=G.total>0?Math.round(G.correct/G.total*100):0;
+  const dur=Math.round((Date.now()-G.startT)/1000);
+  const m=Math.floor(dur/60),s=dur%60;
+  const stars=acc>=90?'⭐⭐⭐':acc>=60?'⭐⭐':acc>=30?'⭐':'';
+  sfx(win?'win':'lose');
+  showScreen('s-end');
+  document.getElementById('end-box').innerHTML=`<span class="end-ico">${win?'🏆':'💀'}</span><div class="end-ttl ${win?'et-w':'et-d'}">${win?'Victory!':'Defeated!'}</div><div style="font-size:10px;color:#aaa;font-style:italic;margin-bottom:7px">"${win?vq():'Return stronger, hero.'}"</div><div style="font-size:18px;margin:4px 0">${stars}</div><div class="end-sts"><div class="est"><div class="esl">GOLD</div><div class="esv">${G.gold}</div></div><div class="est"><div class="esl">ACCURACY</div><div class="esv">${acc}%</div></div><div class="est"><div class="esl">FLOOR</div><div class="esv">${G.floor+1}</div></div><div class="est"><div class="esl">TIME</div><div class="esv">${m}m${s<10?'0':''}${s}s</div></div><div class="est"><div class="esl">SCORE</div><div class="esv">${G.score}</div></div></div><button class="abtn" onclick="startGame()">▶ Play Again</button><br><button class="abtn" onclick="showScreen('s-title')" style="background:#555;border-color:#333;font-size:11px;margin-top:6px">⬛ Menu</button>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  HUD UPDATE
+// ══════════════════════════════════════════════════════════
+function updateHUD(){
+  const pct=G.hp/G.maxHp*100;
+  document.getElementById('hptxt').textContent=`${G.hp}/${G.maxHp}`;
+  document.getElementById('vgold').textContent=G.gold;
+  document.getElementById('vstreak').textContent=G.streak+(G.streak>=2?'🔥':'');
+  const f=document.getElementById('hpfill');f.style.width=pct+'%';f.className='hp-inner '+(pct>60?'hi':pct>30?'mid':'');
+}
+function updateMonHP(){
+  const pct=G.mMax>0?G.mHp/G.mMax*100:0;
+  const f=document.getElementById('mhpfill');if(f)f.style.width=pct+'%';
+  const t=document.getElementById('mhptxt');if(t)t.textContent=`${G.mHp}/${G.mMax} HP`;
+}
+function renderFloorDots(){
+  const w=document.getElementById('fdots');
+  w.innerHTML=Array.from({length:Math.min(G.totalF,12)},(_,i)=>{let c='fdot';if(i<G.floor)c+=' done';if(i===G.floor)c+=' cur';if(i===Math.min(G.totalF,12)-1)c+=' boss';return`<div class="${c}"></div>`;}).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  SPRITE HELPERS
+// ══════════════════════════════════════════════════════════
+function heroAtk(){const h=document.getElementById('hspr');if(!h)return;h.classList.add('atk');setTimeout(()=>h.classList.remove('atk'),440);}
+function heroHurt(){const h=document.getElementById('hspr');if(!h)return;h.classList.add('hurt');setTimeout(()=>h.classList.remove('hurt'),370);}
+function showSay(txt,x,y,dur){
+  document.querySelectorAll('.say').forEach(e=>e.remove());
+  const b=document.createElement('div');b.className='say';b.textContent=txt;b.style.left=x+'px';b.style.top=y+'px';
+  document.getElementById('s-game').appendChild(b);
+  setTimeout(()=>b.remove(),dur);
+}
+function floatNum(txt,col,x,y){
+  const el=document.createElement('div');el.className='floatdmg';el.textContent=txt;el.style.color=col;el.style.left=(x+Math.random()*30)+'px';el.style.top=y+'px';
+  document.getElementById('s-game').appendChild(el);setTimeout(()=>el.remove(),1120);
+}
+function showBossFlash(txt){
+  const el=document.createElement('div');el.className='batk';
+  el.innerHTML=`<div class="batk-txt">${txt}</div>`;
+  document.getElementById('s-game').appendChild(el);setTimeout(()=>el.remove(),1500);
+}
+function showCombo(){
+  if(!CFG.cbo)return;
+  const el=document.createElement('div');el.className='combo';el.innerHTML='<div class="combo-txt">COMBO!</div>';
+  document.body.appendChild(el);setTimeout(()=>el.remove(),820);
+}
+function vq(){return["Math is the weapon of the wise!","The equations bowed before you.","Numbers fear those who understand them!","Logic slays what swords cannot.","The math gods smile upon you!","Only the sharp of mind rules here."][Math.floor(Math.random()*6)];}
+</script>
+</body>
+</html>
